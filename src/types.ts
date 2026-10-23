@@ -30,6 +30,13 @@ export interface Category {
   sort_order: number;
 }
 
+/** 월 예산 한 행 (public.budgets). category가 빈 문자열이면 전체 지출 예산이다. */
+export interface Budget {
+  id: string;
+  category: string;
+  amount: number;
+}
+
 /** 처음 쓰는 계정에 채워 주는 기본 분류. 분류 목록을 불러오지 못할 때의 대체 목록이기도 하다. */
 export const DEFAULT_CATEGORIES: Record<TxType, readonly string[]> = {
   expense: ['식비', '카페·간식', '교통', '주거·통신', '쇼핑', '의료·건강', '문화·여가', '교육', '경조사', '기타'],

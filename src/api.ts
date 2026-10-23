@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { DEFAULT_CATEGORIES, type Category, type Tx, type TxInput, type TxType } from './types';
+import { DEFAULT_CATEGORIES, type Budget, type Category, type Tx, type TxInput, type TxType } from './types';
 import { monthRange } from './util/dates';
 import { buildSearchFilter } from './util/search';
 
@@ -121,6 +121,30 @@ export async function deleteCategory(id: string): Promise<void> {
 export async function setCategoryOrder(changes: readonly { id: string; sort_order: number }[]): Promise<void> {
   for (const c of changes) {
     const { error } = await supabase.from('categories').update({ sort_order: c.sort_order }).eq('id', c.id);
+    if (error) throw error;
+  }
+}
+
+/* ---------- 예산 ---------- */
+
+export async function fetchBudgets(): Promise<Budget[]> {
+  const { data, error } = await supabase.from('budgets').select('id,category,amount');
+  if (error) throw error;
+  return (data ?? []) as Budget[];
+}
+
+/** 예산을 추가/수정(분류별로 하나)하고, 지울 예산을 삭제한다. */
+export async function saveBudgets(changes: {
+  upserts: readonly { category: string; amount: number }[];
+  deletes: readonly string[];
+}): Promise<void> {
+  if (changes.upserts.length > 0) {
+    const rows = changes.upserts.map((u) => ({ ...u, updated_at: new Date().toISOString() }));
+    const { error } = await supabase.from('budgets').upsert(rows, { onConflict: 'user_id,category' });
+    if (error) throw error;
+  }
+  if (changes.deletes.length > 0) {
+    const { error } = await supabase.from('budgets').delete().in('category', [...changes.deletes]);
     if (error) throw error;
   }
 }

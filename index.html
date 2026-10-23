@@ -33,7 +33,14 @@
         </div>
       </header>
 
-      <nav class="month" aria-label="월 선택">
+      <form id="search-form" class="search" role="search">
+        <input type="search" id="search-input" maxlength="40" autocomplete="off" placeholder="메모, 분류, 금액 검색 (전체 기간)" aria-label="내역 검색" />
+        <button type="button" id="search-clear" class="icon-btn" hidden aria-label="검색 지우기">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" /></svg>
+        </button>
+      </form>
+
+      <nav id="month-nav" class="month" aria-label="월 선택">
         <button id="prev-btn" class="icon-btn" type="button" aria-label="이전 달">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5" /></svg>
         </button>
@@ -50,6 +57,10 @@
         <section aria-labelledby="list-title">
           <div class="list-head">
             <h2 id="list-title">내역<span id="list-count" class="count"></span></h2>
+            <div class="head-actions">
+              <button type="button" id="export-btn" class="btn ghost small" title="지금 보이는 목록을 CSV 파일로 저장">CSV 내보내기</button>
+              <button type="button" id="export-all-btn" class="btn ghost small" title="모든 기간의 내역을 CSV 파일로 저장">전체 기간 CSV</button>
+            </div>
             <div id="filters" class="filters" role="group" aria-label="구분 필터">
               <button type="button" class="chip" data-filter="all" aria-pressed="true">전체</button>
               <button type="button" class="chip" data-filter="expense" aria-pressed="false">지출</button>

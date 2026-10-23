@@ -81,13 +81,22 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .btn.primary { background: var(--accent); color: var(--accent-fg); }
 .btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
 .btn.danger { background: transparent; color: var(--expense); border-color: var(--expense); }
+.btn.small { font-size: 13px; padding: 5px 10px; font-weight: 500; }
 .btn[disabled] { opacity: 0.6; cursor: default; }
+.head-actions { display: flex; gap: 6px; margin-left: auto; }
 .icon-btn {
   width: 36px; height: 36px; display: grid; place-items: center; flex: none;
   border: 1px solid var(--line); background: var(--surface); color: var(--fg);
   border-radius: 6px; cursor: pointer;
 }
 .icon-btn svg { width: 18px; height: 18px; }
+
+.search { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+.search input[type='search'] {
+  font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; padding: 9px 12px; min-width: 0; flex: 1;
+}
+.search input[type='search']::placeholder { color: var(--muted); }
 
 .month { display: flex; align-items: center; gap: 8px; margin: 16px 0; }
 .month h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin: 0 6px; min-width: 7.5em; text-align: center; }

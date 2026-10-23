@@ -33,6 +33,12 @@ export function dayLabel(date: string): string {
   return `${d}일 ${DOW[new Date(y, m - 1, d).getDay()]}요일`;
 }
 
+/** '2026-10-23' -> '2026년 10월 23일 금요일' (여러 달에 걸친 목록용) */
+export function fullDateLabel(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  return `${y}년 ${m}월 ${d}일 ${DOW[new Date(y, m - 1, d).getDay()]}요일`;
+}
+
 /** '2026-10' -> '2026년 10월' */
 export function monthLabel(month: string): string {
   const [y, m] = month.split('-').map(Number);

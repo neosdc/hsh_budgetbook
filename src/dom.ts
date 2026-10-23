@@ -1,3 +1,5 @@
+import { digitsOnly } from './util/format';
+
 export function $<T extends HTMLElement = HTMLElement>(id: string): T {
   const el = document.getElementById(id);
   if (!el) throw new Error(`#${id} 요소를 찾을 수 없습니다.`);
@@ -14,6 +16,23 @@ export function downloadText(filename: string, text: string, mime = 'text/csv;ch
   a.click();
   a.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** 입력창을 천 단위 쉼표가 있는 숫자로 고쳐 쓰고, 쉼표가 늘어나도 커서가 같은 숫자 뒤에 머물게 한다. */
+export function formatAmountField(el: HTMLInputElement): void {
+  const raw = el.value;
+  const pos = el.selectionStart ?? raw.length;
+  const digitsBefore = raw.slice(0, pos).replace(/\D/g, '').length;
+  const digits = digitsOnly(raw);
+  const formatted = digits ? Number(digits).toLocaleString('ko-KR') : '';
+  el.value = formatted;
+  let counted = 0;
+  let next = 0;
+  while (next < formatted.length && counted < digitsBefore) {
+    if (/\d/.test(formatted[next])) counted++;
+    next++;
+  }
+  el.setSelectionRange(next, next);
 }
 
 let toastTimer: number | undefined;

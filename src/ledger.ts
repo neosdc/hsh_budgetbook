@@ -1,8 +1,10 @@
 import { SEARCH_LIMIT, fetchAll, fetchMonth, removeTx, saveTx, searchTx } from './api';
-import { $, downloadText, toast } from './dom';
+import { $, downloadText, formatAmountField, toast } from './dom';
 import { describeError } from './errors';
+import { BudgetManager } from './budgets';
 import { CategoryManager, type CategoryChange } from './categories';
 import type { Tx, TxInput, TxType } from './types';
+import { OVERALL, budgetStatuses, worsened, type BudgetStatus } from './util/budget';
 import { categoryOptions } from './util/categories';
 import { toCsv, safeFileName } from './util/csv';
 import { dayLabel, fullDateLabel, monthLabel, monthOf, shiftMonth, todayStr } from './util/dates';
@@ -37,6 +39,7 @@ export class Ledger {
   private deleteTimer: number | undefined;
 
   private readonly cats = new CategoryManager((change) => this.onCategoriesChanged(change));
+  private readonly budgets = new BudgetManager(() => this.renderBudget());
   private readonly dlg = $<HTMLDialogElement>('dlg');
   private readonly amountInput = $<HTMLInputElement>('f-amount');
 
@@ -64,6 +67,7 @@ export class Ledger {
     $<HTMLInputElement>('search-input').value = '';
     this.setFilterButtons();
     void this.cats.load();
+    void this.budgets.load();
     void this.load();
   }
 
@@ -73,6 +77,7 @@ export class Ledger {
     window.clearTimeout(this.searchTimer);
     this.closeDialog();
     this.cats.reset();
+    this.budgets.reset();
     this.s = this.initialState();
   }
 
@@ -126,6 +131,8 @@ export class Ledger {
       const { type, from, to } = change.renamed;
       const editing = this.s.editing;
       if (editing && editing.type === type && editing.category === from) editing.category = to;
+      // 지출 분류의 예산도 서버에서 새 이름으로 옮겨졌다.
+      if (type === 'expense') void this.budgets.load();
       void this.load(true);
     }
   }
@@ -184,6 +191,7 @@ export class Ledger {
     this.renderSummary();
     this.renderList();
     this.renderCategories();
+    this.renderBudget();
   }
 
   private renderMonth(): void {
@@ -302,6 +310,68 @@ export class Ledger {
     });
   }
 
+  /** 이 달 지출 현황. 검색 결과 화면에서는 월 데이터가 아니므로 빈 목록이다. */
+  private budgetStatuses(): BudgetStatus[] {
+    if (this.s.query || this.s.loading || this.s.error) return [];
+    return budgetStatuses(this.budgets.list(), this.s.tx, this.cats.names('expense'));
+  }
+
+  private renderBudget(): void {
+    const section = $('budget');
+    // 검색 결과는 기간 전체라 월 예산과 비교할 수 없다.
+    section.hidden = this.s.query !== '';
+    const body = $('budget-body');
+    if (this.budgets.failed) {
+      body.innerHTML =
+        '<p class="hint">예산을 불러오지 못했습니다. 데이터베이스 설정(마이그레이션)이 아직 적용되지 않았거나 네트워크 문제일 수 있습니다.</p>';
+      return;
+    }
+    if (!this.budgets.loaded) {
+      body.innerHTML = '<p class="hint">불러오는 중입니다.</p>';
+      return;
+    }
+    if (this.budgets.list().length === 0) {
+      body.innerHTML = '<p class="hint">월 예산을 정하면 지출이 예산에 가까워지거나 넘을 때 여기에 표시하고 알려 드립니다.</p>';
+      return;
+    }
+    if (this.s.loading || this.s.error) {
+      body.innerHTML = '<p class="hint">내역을 불러온 뒤 표시합니다.</p>';
+      return;
+    }
+    const list = this.budgetStatuses();
+    const over = list.filter((x) => x.state === 'over').length;
+    const warn = list.filter((x) => x.state === 'warn').length;
+    const alert =
+      over > 0
+        ? `<p class="bud-alert over" role="status">예산을 초과한 항목이 ${over}개 있습니다.</p>`
+        : warn > 0
+          ? `<p class="bud-alert warn" role="status">예산의 80%에 이른 항목이 ${warn}개 있습니다.</p>`
+          : '';
+    const items = list
+      .map((x) => {
+        const label = x.key === OVERALL ? '전체 지출' : x.key;
+        const text =
+          x.state === 'over'
+            ? `${won(-x.remaining)}원 초과`
+            : x.state === 'warn'
+              ? `경고 · ${won(x.remaining)}원 남음`
+              : `${won(x.remaining)}원 남음`;
+        const pct = Math.min(100, x.ratio * 100);
+        return (
+          `<div class="bud-item${x.key === OVERALL ? ' overall' : ''} ${x.state}">` +
+          `<div class="bud-top"><span>${esc(label)}</span>` +
+          `<span class="bud-amts"><strong>${won(x.spent)}</strong> / ${won(x.budget)}원 · ${Math.round(x.ratio * 100)}%</span></div>` +
+          `<div class="bud-bar"><div class="bud-fill" data-w="${pct.toFixed(1)}"></div></div>` +
+          `<div class="bud-state">${esc(text)}</div></div>`
+        );
+      })
+      .join('');
+    body.innerHTML = `${alert}<div class="bud-items">${items}</div>`;
+    body.querySelectorAll<HTMLElement>('.bud-fill').forEach((el) => {
+      el.style.width = `${el.dataset.w ?? '0'}%`;
+    });
+  }
+
   private setFilterButtons(): void {
     document.querySelectorAll<HTMLButtonElement>('#filters .chip').forEach((b) => {
       b.setAttribute('aria-pressed', String(b.dataset.filter === this.s.filter));
@@ -319,24 +389,6 @@ export class Ledger {
     const sel = $<HTMLSelectElement>('f-category');
     sel.innerHTML = options.map((o) => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('');
     sel.value = selected !== null && options.some((o) => o.value === selected) ? selected : options[0].value;
-  }
-
-  private formatAmountInput(): void {
-    const el = this.amountInput;
-    const raw = el.value;
-    const pos = el.selectionStart ?? raw.length;
-    const digitsBefore = raw.slice(0, pos).replace(/\D/g, '').length;
-    const digits = digitsOnly(raw);
-    const formatted = digits ? Number(digits).toLocaleString('ko-KR') : '';
-    el.value = formatted;
-    // 쉼표가 늘어나도 커서가 같은 숫자 뒤에 머물도록 위치를 다시 계산한다.
-    let counted = 0;
-    let next = 0;
-    while (next < formatted.length && counted < digitsBefore) {
-      if (/\d/.test(formatted[next])) counted++;
-      next++;
-    }
-    el.setSelectionRange(next, next);
   }
 
   private resetDelete(): void {
@@ -406,6 +458,9 @@ export class Ledger {
     this.showFormError('');
     this.saving = true;
     $<HTMLButtonElement>('save-btn').disabled = true;
+    // 지금 보고 있는 달에 지출을 저장하면, 저장 전후의 예산 현황을 비교해 초과/경고를 알려 준다.
+    const watch = input.type === 'expense' || this.s.editing?.type === 'expense';
+    const before = watch && monthOf(date) === this.s.month ? this.budgetStatuses() : null;
     try {
       await saveTx(this.s.editing?.id ?? null, input);
       this.saving = false;
@@ -417,11 +472,25 @@ export class Ledger {
           : `${Number(m.split('-')[1])}월 내역으로 저장했습니다.`,
       );
       await this.load(true);
+      if (before) this.notifyBudget(before);
     } catch (err) {
       this.saving = false;
       $<HTMLButtonElement>('save-btn').disabled = false;
       this.showFormError(describeError(err, '저장'));
     }
+  }
+
+  /** 저장 후 새로 경고/초과가 된 예산이 있으면 알린다. */
+  private notifyBudget(before: readonly BudgetStatus[]): void {
+    const hits = worsened(before, this.budgetStatuses());
+    if (hits.length === 0) return;
+    const first = hits[0];
+    const name = first.key === OVERALL ? '이번 달 전체 지출' : `'${first.key}'`;
+    const msg =
+      first.state === 'over'
+        ? `${name} 예산을 ${won(-first.remaining)}원 초과했습니다.`
+        : `${name} 예산의 ${Math.round(first.ratio * 100)}%를 썼습니다. ${won(first.remaining)}원 남았습니다.`;
+    toast(hits.length > 1 ? `${msg} (외 ${hits.length - 1}건)` : msg);
   }
 
   private async onDelete(): Promise<void> {
@@ -471,6 +540,7 @@ export class Ledger {
     });
     $('cat-manage-btn').addEventListener('click', () => void this.cats.open('expense'));
     $('cat-manage-link').addEventListener('click', () => void this.cats.open(this.selectedType()));
+    $('budget-btn').addEventListener('click', () => void this.budgets.open(this.cats.names('expense')));
     $('export-btn').addEventListener('click', () => this.exportCurrent());
     $('export-all-btn').addEventListener('click', () => void this.exportAll());
 
@@ -506,6 +576,6 @@ export class Ledger {
       );
     $('type-expense').addEventListener('change', refill);
     $('type-income').addEventListener('change', refill);
-    this.amountInput.addEventListener('input', () => this.formatAmountInput());
+    this.amountInput.addEventListener('input', () => formatAmountField(this.amountInput));
   }
 }

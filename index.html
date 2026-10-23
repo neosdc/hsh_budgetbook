@@ -53,6 +53,14 @@
 
       <section id="summary" class="summary" aria-label="월 요약"></section>
 
+      <section id="budget" class="budget" aria-labelledby="budget-title">
+        <div class="side-head">
+          <h2 id="budget-title">월 예산</h2>
+          <button type="button" id="budget-btn" class="btn ghost small">예산 설정</button>
+        </div>
+        <div id="budget-body"></div>
+      </section>
+
       <div class="cols">
         <section aria-labelledby="list-title">
           <div class="list-head">
@@ -154,6 +162,25 @@
           <button type="button" id="cat-done" class="btn ghost">닫기</button>
         </div>
       </div>
+    </dialog>
+
+    <dialog id="bud-dlg" aria-labelledby="bud-dlg-title">
+      <form id="bud-form" class="dlg-body" novalidate>
+        <div class="dlg-head">
+          <h2 id="bud-dlg-title">예산 설정</h2>
+          <button type="button" id="bud-close" class="icon-btn" aria-label="닫기">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" /></svg>
+          </button>
+        </div>
+        <p class="hint">매달 같은 금액이 적용됩니다. 지출이 예산의 80%에 이르면 경고, 넘으면 초과로 표시합니다. 비워 두면 설정하지 않습니다.</p>
+        <ul id="bud-list" class="bud-list"></ul>
+        <p id="bud-error" class="error" role="alert" hidden></p>
+        <div class="dlg-actions">
+          <span class="spacer"></span>
+          <button type="button" id="bud-cancel" class="btn ghost">취소</button>
+          <button type="submit" id="bud-save" class="btn primary">저장</button>
+        </div>
+      </form>
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"><span></span></div>

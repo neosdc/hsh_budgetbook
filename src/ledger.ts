@@ -1,10 +1,11 @@
-import { fetchMonth, removeTx, saveTx } from './api';
-import { $, toast } from './dom';
+import { SEARCH_LIMIT, fetchAll, fetchMonth, removeTx, saveTx, searchTx } from './api';
+import { $, downloadText, toast } from './dom';
 import { describeError } from './errors';
 import { CATEGORIES, type Tx, type TxInput, type TxType } from './types';
-import { dayLabel, monthLabel, monthOf, shiftMonth, todayStr } from './util/dates';
+import { toCsv, safeFileName } from './util/csv';
+import { dayLabel, fullDateLabel, monthLabel, monthOf, shiftMonth, todayStr } from './util/dates';
 import { digitsOnly, esc, won } from './util/format';
-import { expenseByCategory, groupByDate, sums } from './util/summary';
+import { expenseByCategory, filterByType, groupByDate, sums } from './util/summary';
 
 type Filter = 'all' | TxType;
 
@@ -15,6 +16,10 @@ interface State {
   loading: boolean;
   error: string;
   editing: Tx | null;
+  /** 적용된 검색어. 비어 있지 않으면 월 보기 대신 전체 기간 검색 결과를 보여 준다. */
+  query: string;
+  /** 검색 결과가 SEARCH_LIMIT건을 넘어 잘렸는지 */
+  truncated: boolean;
 }
 
 /** 로그인 후 보이는 가계부 화면 전체(요약, 목록, 분류, 입력 대화상자)를 담당한다. */
@@ -24,6 +29,8 @@ export class Ledger {
   /** 늦게 도착한 이전 요청의 응답을 버리기 위한 순번 */
   private seq = 0;
   private saving = false;
+  private exporting = false;
+  private searchTimer: number | undefined;
   private deleteArmed = false;
   private deleteTimer: number | undefined;
 
@@ -35,13 +42,23 @@ export class Ledger {
   }
 
   private initialState(): State {
-    return { month: this.currentMonth, tx: [], filter: 'all', loading: true, error: '', editing: null };
+    return {
+      month: this.currentMonth,
+      tx: [],
+      filter: 'all',
+      loading: true,
+      error: '',
+      editing: null,
+      query: '',
+      truncated: false,
+    };
   }
 
   /** 로그인한 사용자로 화면을 시작한다. */
   start(email: string): void {
     this.s = this.initialState();
     $('who').textContent = email;
+    $<HTMLInputElement>('search-input').value = '';
     this.setFilterButtons();
     void this.load();
   }
@@ -49,6 +66,7 @@ export class Ledger {
   /** 로그아웃 등으로 화면을 정리한다. */
   stop(): void {
     this.seq++;
+    window.clearTimeout(this.searchTimer);
     this.closeDialog();
     this.s = this.initialState();
   }
@@ -64,9 +82,17 @@ export class Ledger {
       this.render();
     }
     try {
-      const rows = await fetchMonth(this.s.month);
-      if (seq !== this.seq) return;
-      this.s.tx = rows;
+      if (this.s.query) {
+        const result = await searchTx(this.s.query);
+        if (seq !== this.seq) return;
+        this.s.tx = result.rows;
+        this.s.truncated = result.truncated;
+      } else {
+        const rows = await fetchMonth(this.s.month);
+        if (seq !== this.seq) return;
+        this.s.tx = rows;
+        this.s.truncated = false;
+      }
       this.s.loading = false;
       this.s.error = '';
     } catch (e) {
@@ -88,6 +114,47 @@ export class Ledger {
     void this.load();
   }
 
+  /** 검색어를 적용한다. 비우면 월 보기로 돌아간다. */
+  private applyQuery(raw: string): void {
+    $('search-clear').hidden = raw === '';
+    const query = raw.trim();
+    if (query === this.s.query) return;
+    this.s.query = query;
+    void this.load();
+  }
+
+  /* ---------- 내보내기 ---------- */
+
+  /** 지금 보이는 목록(월 또는 검색 결과, 구분 필터 적용)을 CSV로 저장한다. */
+  private exportCurrent(): void {
+    const rows = this.visibleRows();
+    if (rows.length === 0) return;
+    const label = this.s.query ? `검색_${this.s.query}` : this.s.month;
+    downloadText(`${safeFileName(`가계부_${label}`)}.csv`, toCsv(rows));
+    toast(`${rows.length}건을 CSV로 저장했습니다.`);
+  }
+
+  /** 모든 기간의 내역을 CSV로 저장한다. */
+  private async exportAll(): Promise<void> {
+    if (this.exporting) return;
+    this.exporting = true;
+    this.updateExportButtons();
+    try {
+      const rows = await fetchAll();
+      if (rows.length === 0) {
+        toast('내보낼 내역이 없습니다.');
+        return;
+      }
+      downloadText(`가계부_전체_${todayStr()}.csv`, toCsv(rows));
+      toast(`전체 ${rows.length}건을 CSV로 저장했습니다.`);
+    } catch (e) {
+      toast(describeError(e, '불러오기'));
+    } finally {
+      this.exporting = false;
+      this.updateExportButtons();
+    }
+  }
+
   /* ---------- 렌더링 ---------- */
 
   private render(): void {
@@ -100,6 +167,19 @@ export class Ledger {
   private renderMonth(): void {
     $('month-label').textContent = monthLabel(this.s.month);
     $('today-btn').hidden = this.s.month === this.currentMonth;
+    // 검색 결과는 기간 전체이므로 월 이동은 숨긴다.
+    $('month-nav').hidden = this.s.query !== '';
+  }
+
+  /** 목록 위쪽에 보이는 내역(구분 필터 적용) */
+  private visibleRows(): Tx[] {
+    return filterByType(this.s.tx, this.s.filter);
+  }
+
+  private updateExportButtons(): void {
+    const noData = this.s.loading || this.s.error !== '' || this.visibleRows().length === 0;
+    $<HTMLButtonElement>('export-btn').disabled = noData || this.exporting;
+    $<HTMLButtonElement>('export-all-btn').disabled = this.exporting;
   }
 
   private renderSummary(): void {
@@ -116,8 +196,16 @@ export class Ledger {
 
   private renderList(): void {
     const list = $('list');
-    const rows = this.s.tx.filter((t) => this.s.filter === 'all' || t.type === this.s.filter);
-    $('list-count').textContent = this.s.loading || this.s.error ? '' : `${rows.length}건`;
+    const rows = this.visibleRows();
+    const searching = this.s.query !== '';
+    $('list-title').firstChild!.textContent = searching ? `'${this.s.query}' 검색 결과` : '내역';
+    $('list-count').textContent =
+      this.s.loading || this.s.error
+        ? ''
+        : this.s.truncated
+          ? `최근 ${SEARCH_LIMIT}건`
+          : `${rows.length}건`;
+    this.updateExportButtons();
 
     if (this.s.loading) {
       list.innerHTML = '<p class="empty">불러오는 중입니다.</p>';
@@ -130,7 +218,11 @@ export class Ledger {
       return;
     }
     if (rows.length === 0) {
-      if (this.s.tx.length === 0) {
+      if (searching && this.s.tx.length === 0) {
+        list.innerHTML =
+          `<p class="empty"><strong>검색 결과가 없습니다</strong>` +
+          `메모, 분류, 금액(숫자만 입력하면 같은 금액)에서 찾습니다. 다른 검색어를 입력해 보세요.</p>`;
+      } else if (this.s.tx.length === 0) {
         const m = Number(this.s.month.split('-')[1]);
         list.innerHTML =
           `<div class="empty"><strong>${m}월 내역이 아직 없습니다</strong>` +
@@ -146,7 +238,7 @@ export class Ledger {
       .map((g) => {
         const day = sums(g.rows);
         const head =
-          `<div class="day-head"><span>${esc(dayLabel(g.date))}</span><span class="day-sums">` +
+          `<div class="day-head"><span>${esc(searching ? fullDateLabel(g.date) : dayLabel(g.date))}</span><span class="day-sums">` +
           (day.income ? `<span>수입 ${won(day.income)}</span>` : '') +
           (day.expense ? `<span>지출 ${won(day.expense)}</span>` : '') +
           `</span></div>`;
@@ -297,7 +389,11 @@ export class Ledger {
       this.saving = false;
       this.closeDialog();
       const m = monthOf(date);
-      toast(m === this.s.month ? '저장했습니다.' : `${Number(m.split('-')[1])}월 내역으로 저장했습니다.`);
+      toast(
+        this.s.query !== '' || m === this.s.month
+          ? '저장했습니다.'
+          : `${Number(m.split('-')[1])}월 내역으로 저장했습니다.`,
+      );
       await this.load(true);
     } catch (err) {
       this.saving = false;
@@ -334,6 +430,25 @@ export class Ledger {
     $('prev-btn').addEventListener('click', () => this.setMonth(shiftMonth(this.s.month, -1)));
     $('next-btn').addEventListener('click', () => this.setMonth(shiftMonth(this.s.month, 1)));
     $('today-btn').addEventListener('click', () => this.setMonth(this.currentMonth));
+
+    const searchInput = $<HTMLInputElement>('search-input');
+    searchInput.addEventListener('input', () => {
+      window.clearTimeout(this.searchTimer);
+      this.searchTimer = window.setTimeout(() => this.applyQuery(searchInput.value), 350);
+    });
+    $('search-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      window.clearTimeout(this.searchTimer);
+      this.applyQuery(searchInput.value);
+    });
+    $('search-clear').addEventListener('click', () => {
+      window.clearTimeout(this.searchTimer);
+      searchInput.value = '';
+      this.applyQuery('');
+      searchInput.focus();
+    });
+    $('export-btn').addEventListener('click', () => this.exportCurrent());
+    $('export-all-btn').addEventListener('click', () => void this.exportAll());
 
     $('filters').addEventListener('click', (e) => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>('.chip');

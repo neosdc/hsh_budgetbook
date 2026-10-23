@@ -21,6 +21,11 @@ export function compareTx(a: Tx, b: Tx): number {
   return a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0;
 }
 
+/** 구분 필터(전체/지출/수입)를 적용한다. */
+export function filterByType(rows: readonly Tx[], filter: 'all' | Tx['type']): Tx[] {
+  return filter === 'all' ? [...rows] : rows.filter((t) => t.type === filter);
+}
+
 export interface DayGroup {
   date: string;
   rows: Tx[];

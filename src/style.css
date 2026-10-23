@@ -187,6 +187,8 @@ dialog::backdrop { background: rgba(8, 16, 12, 0.5); }
 .seg label { text-align: center; padding: 10px; cursor: pointer; font-weight: 600; color: var(--muted); }
 #type-expense:checked + label { background: var(--expense-bg); color: var(--expense); }
 #type-income:checked + label { background: var(--income-bg); color: var(--income); }
+#cat-type-expense:checked + label { background: var(--expense-bg); color: var(--expense); }
+#cat-type-income:checked + label { background: var(--income-bg); color: var(--income); }
 .seg input:focus-visible + label { outline: 2px solid var(--focus); outline-offset: -2px; }
 .field { display: grid; gap: 6px; min-width: 0; }
 .field > label { font-size: 13px; color: var(--muted); }
@@ -214,3 +216,22 @@ input[type='text'], input[type='date'], select {
 }
 .toast.show span { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .toast span { transition: none; } }
+
+/* 분류 관리 */
+.side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.side-head h2 { margin: 0; }
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.label-row label { font-size: 13px; color: var(--muted); }
+.link-btn { background: none; border: 0; padding: 0; font-size: 13px; color: var(--accent); cursor: pointer; text-decoration: underline; }
+.dlg-body { padding: 20px; display: grid; gap: 16px; }
+.dlg-body .hint { margin: 0; font-size: 12px; color: var(--muted); }
+.cat-list { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow-y: auto; border-top: 1px solid var(--line); }
+.cat-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+.cat-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-btns { display: flex; align-items: center; gap: 4px; flex: none; }
+.icon-btn.small { width: 28px; height: 28px; font-size: 14px; }
+.icon-btn[disabled] { opacity: 0.35; cursor: default; }
+.cat-edit { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0; flex: 1; }
+.cat-add { display: flex; gap: 8px; }
+.cat-add input { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; min-width: 0; flex: 1; }
+@media (max-width: 420px) { .cat-row { flex-wrap: wrap; } .cat-btns { width: 100%; justify-content: flex-end; } }

@@ -48,6 +48,12 @@ supabase/migrations/   DB 스키마 SQL
 .github/workflows/deploy.yml   GitHub Pages 배포
 ```
 
+## 홈 화면에 추가 (PWA)
+
+`public/manifest.webmanifest`와 아이콘(`public/`의 PNG, `favicon.ico`)이 있어 휴대폰 크롬에서 홈 화면에 추가하면 주소창 없는 앱 화면으로 열립니다.
+`public/`의 파일은 빌드 때 `dist/` 루트로 그대로 복사되며, 저장소 루트에 둔 파일은 배포되지 않습니다.
+이미 추가한 바로가기의 아이콘은 만들 때 저장된 이미지라 갱신되지 않으므로, 지우고 다시 추가해야 합니다.
+
 ## 로컬 실행
 
 ```sh

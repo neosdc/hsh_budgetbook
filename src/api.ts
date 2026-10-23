@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Tx, TxInput } from './types';
+import { DEFAULT_CATEGORIES, type Category, type Tx, type TxInput, type TxType } from './types';
 import { monthRange } from './util/dates';
 import { buildSearchFilter } from './util/search';
 
@@ -74,4 +74,53 @@ export async function saveTx(id: string | null, input: TxInput): Promise<void> {
 export async function removeTx(id: string): Promise<void> {
   const { error } = await supabase.from('transactions').delete().eq('id', id);
   if (error) throw error;
+}
+
+/* ---------- 분류 ---------- */
+
+const CATEGORY_COLUMNS = 'id,type,name,sort_order';
+
+export async function fetchCategories(): Promise<Category[]> {
+  const { data, error } = await supabase
+    .from('categories')
+    .select(CATEGORY_COLUMNS)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Category[];
+}
+
+/** 처음 쓰는 계정에 기본 분류를 채운다. 두 탭에서 동시에 실행해도 중복되지 않는다(이미 있으면 건너뜀). */
+export async function seedDefaultCategories(): Promise<void> {
+  const rows = (['expense', 'income'] as const).flatMap((type) =>
+    DEFAULT_CATEGORIES[type].map((name, sort_order) => ({ type, name, sort_order })),
+  );
+  const { error } = await supabase
+    .from('categories')
+    .upsert(rows, { onConflict: 'user_id,type,name', ignoreDuplicates: true });
+  if (error) throw error;
+}
+
+export async function addCategory(type: TxType, name: string, sortOrder: number): Promise<void> {
+  const { error } = await supabase.from('categories').insert({ type, name, sort_order: sortOrder });
+  if (error) throw error;
+}
+
+/** 분류 이름과, 그 분류로 기록된 모든 내역의 분류를 한 트랜잭션으로 바꾼다. */
+export async function renameCategory(type: TxType, from: string, to: string): Promise<void> {
+  const { error } = await supabase.rpc('rename_category', { p_type: type, p_old: from, p_new: to });
+  if (error) throw error;
+}
+
+/** 분류만 지운다. 그 분류로 기록된 내역은 그대로 남는다. */
+export async function deleteCategory(id: string): Promise<void> {
+  const { error } = await supabase.from('categories').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function setCategoryOrder(changes: readonly { id: string; sort_order: number }[]): Promise<void> {
+  for (const c of changes) {
+    const { error } = await supabase.from('categories').update({ sort_order: c.sort_order }).eq('id', c.id);
+    if (error) throw error;
+  }
 }

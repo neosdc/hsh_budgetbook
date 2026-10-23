@@ -1,7 +1,9 @@
 import { SEARCH_LIMIT, fetchAll, fetchMonth, removeTx, saveTx, searchTx } from './api';
 import { $, downloadText, toast } from './dom';
 import { describeError } from './errors';
-import { CATEGORIES, type Tx, type TxInput, type TxType } from './types';
+import { CategoryManager, type CategoryChange } from './categories';
+import type { Tx, TxInput, TxType } from './types';
+import { categoryOptions } from './util/categories';
 import { toCsv, safeFileName } from './util/csv';
 import { dayLabel, fullDateLabel, monthLabel, monthOf, shiftMonth, todayStr } from './util/dates';
 import { digitsOnly, esc, won } from './util/format';
@@ -34,6 +36,7 @@ export class Ledger {
   private deleteArmed = false;
   private deleteTimer: number | undefined;
 
+  private readonly cats = new CategoryManager((change) => this.onCategoriesChanged(change));
   private readonly dlg = $<HTMLDialogElement>('dlg');
   private readonly amountInput = $<HTMLInputElement>('f-amount');
 
@@ -60,6 +63,7 @@ export class Ledger {
     $('who').textContent = email;
     $<HTMLInputElement>('search-input').value = '';
     this.setFilterButtons();
+    void this.cats.load();
     void this.load();
   }
 
@@ -68,6 +72,7 @@ export class Ledger {
     this.seq++;
     window.clearTimeout(this.searchTimer);
     this.closeDialog();
+    this.cats.reset();
     this.s = this.initialState();
   }
 
@@ -106,6 +111,23 @@ export class Ledger {
       }
     }
     this.render();
+  }
+
+  /** 분류 목록이 바뀌면(불러오기, 추가, 이름 변경 등) 열려 있는 입력창의 선택지를 갱신한다. */
+  private onCategoriesChanged(change: CategoryChange): void {
+    if (this.dlg.open) {
+      const sel = $<HTMLSelectElement>('f-category');
+      const r = change.renamed;
+      const keep = r && r.type === this.selectedType() && sel.value === r.from ? r.to : sel.value;
+      this.fillCategories(keep);
+    }
+    if (change.renamed) {
+      // 이름이 바뀐 분류의 내역도 서버에서 함께 바뀌었으므로 화면의 내역을 다시 불러온다.
+      const { type, from, to } = change.renamed;
+      const editing = this.s.editing;
+      if (editing && editing.type === type && editing.category === from) editing.category = to;
+      void this.load(true);
+    }
   }
 
   private setMonth(month: string): void {
@@ -293,10 +315,10 @@ export class Ledger {
   }
 
   private fillCategories(selected: string | null): void {
-    const list = CATEGORIES[this.selectedType()];
+    const options = categoryOptions(this.cats.names(this.selectedType()), selected);
     const sel = $<HTMLSelectElement>('f-category');
-    sel.innerHTML = list.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
-    sel.value = selected !== null && list.includes(selected) ? selected : list[0];
+    sel.innerHTML = options.map((o) => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('');
+    sel.value = selected !== null && options.some((o) => o.value === selected) ? selected : options[0].value;
   }
 
   private formatAmountInput(): void {
@@ -447,6 +469,8 @@ export class Ledger {
       this.applyQuery('');
       searchInput.focus();
     });
+    $('cat-manage-btn').addEventListener('click', () => void this.cats.open('expense'));
+    $('cat-manage-link').addEventListener('click', () => void this.cats.open(this.selectedType()));
     $('export-btn').addEventListener('click', () => this.exportCurrent());
     $('export-all-btn').addEventListener('click', () => void this.exportAll());
 
@@ -475,7 +499,11 @@ export class Ledger {
     this.dlg.addEventListener('click', (e) => {
       if (e.target === this.dlg) this.closeDialog();
     });
-    const refill = (): void => this.fillCategories($<HTMLSelectElement>('f-category').value);
+    // 구분을 바꾸면 선택한 분류는 다른 구분의 것이므로, 수정 중인 내역과 같은 구분일 때만 원래 분류를 유지한다.
+    const refill = (): void =>
+      this.fillCategories(
+        this.s.editing && this.s.editing.type === this.selectedType() ? this.s.editing.category : null,
+      );
     $('type-expense').addEventListener('change', refill);
     $('type-income').addEventListener('change', refill);
     this.amountInput.addEventListener('input', () => this.formatAmountInput());

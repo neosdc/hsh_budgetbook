@@ -71,7 +71,10 @@
         </section>
 
         <aside class="side" aria-labelledby="cat-title">
-          <h2 id="cat-title">지출 분류</h2>
+          <div class="side-head">
+            <h2 id="cat-title">지출 분류</h2>
+            <button type="button" id="cat-manage-btn" class="btn ghost small">분류 관리</button>
+          </div>
           <div id="cats"></div>
         </aside>
       </div>
@@ -104,7 +107,10 @@
             <input type="date" id="f-date" />
           </div>
           <div class="field">
-            <label for="f-category">분류</label>
+            <div class="label-row">
+              <label for="f-category">분류</label>
+              <button type="button" id="cat-manage-link" class="link-btn">분류 관리</button>
+            </div>
             <select id="f-category"></select>
           </div>
         </div>
@@ -120,6 +126,34 @@
           <button type="submit" id="save-btn" class="btn primary">저장</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="cat-dlg" aria-labelledby="cat-dlg-title">
+      <div class="dlg-body">
+        <div class="dlg-head">
+          <h2 id="cat-dlg-title">분류 관리</h2>
+          <button type="button" id="cat-close" class="icon-btn" aria-label="닫기">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" /></svg>
+          </button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="분류 구분">
+          <input type="radio" name="cat-type" id="cat-type-expense" value="expense" checked />
+          <label for="cat-type-expense">지출 분류</label>
+          <input type="radio" name="cat-type" id="cat-type-income" value="income" />
+          <label for="cat-type-income">수입 분류</label>
+        </div>
+        <ul id="cat-list" class="cat-list"></ul>
+        <form id="cat-add-form" class="cat-add" novalidate>
+          <input type="text" id="cat-new" maxlength="40" autocomplete="off" placeholder="새 분류 이름 (20자 이내)" aria-label="새 분류 이름" />
+          <button type="submit" id="cat-add-btn" class="btn primary">추가</button>
+        </form>
+        <p class="hint">분류를 삭제해도 그 분류로 기록한 내역은 그대로 남습니다. 이름을 바꾸면 기존 내역의 분류 이름도 함께 바뀝니다.</p>
+        <p id="cat-error" class="error" role="alert" hidden></p>
+        <div class="dlg-actions">
+          <span class="spacer"></span>
+          <button type="button" id="cat-done" class="btn ghost">닫기</button>
+        </div>
+      </div>
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"><span></span></div>

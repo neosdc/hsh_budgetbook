@@ -1,17 +1,20 @@
-import { SEARCH_LIMIT, fetchAll, fetchMonth, removeTx, saveTx, searchTx } from './api';
+import { SEARCH_LIMIT, fetchAll, fetchMonth, fetchRange, removeTx, saveTx, searchTx } from './api';
 import { $, downloadText, formatAmountField, toast } from './dom';
 import { describeError } from './errors';
 import { BudgetManager } from './budgets';
+import { RecurringManager } from './recurring';
+import { TrendView } from './trend';
 import { CategoryManager, type CategoryChange } from './categories';
 import type { Tx, TxInput, TxType } from './types';
 import { OVERALL, budgetStatuses, worsened, type BudgetStatus } from './util/budget';
 import { categoryOptions } from './util/categories';
 import { toCsv, safeFileName } from './util/csv';
-import { dayLabel, fullDateLabel, monthLabel, monthOf, shiftMonth, todayStr } from './util/dates';
+import { dayLabel, fullDateLabel, monthLabel, monthOf, monthRange, shiftMonth, todayStr } from './util/dates';
 import { digitsOnly, esc, won } from './util/format';
 import { expenseByCategory, filterByType, groupByDate, sums } from './util/summary';
 
 type Filter = 'all' | TxType;
+type View = 'month' | 'trend';
 
 interface State {
   month: string;
@@ -37,8 +40,15 @@ export class Ledger {
   private searchTimer: number | undefined;
   private deleteArmed = false;
   private deleteTimer: number | undefined;
+  private view: View = 'month';
+  private trendSeq = 0;
 
   private readonly cats = new CategoryManager((change) => this.onCategoriesChanged(change));
+  private readonly recurring = new RecurringManager(
+    (type) => this.cats.names(type),
+    (count) => this.onRecurringGenerated(count),
+  );
+  private readonly trend = new TrendView((month) => this.openMonth(month));
   private readonly budgets = new BudgetManager(() => this.renderBudget());
   private readonly dlg = $<HTMLDialogElement>('dlg');
   private readonly amountInput = $<HTMLInputElement>('f-amount');
@@ -69,6 +79,9 @@ export class Ledger {
     void this.cats.load();
     void this.budgets.load();
     void this.load();
+    this.setView('month');
+    // 오늘까지 기록되어야 하는 반복 내역을 만든다. 만들어지면 onRecurringGenerated가 화면을 갱신한다.
+    void this.recurring.generate();
   }
 
   /** 로그아웃 등으로 화면을 정리한다. */
@@ -78,6 +91,8 @@ export class Ledger {
     this.closeDialog();
     this.cats.reset();
     this.budgets.reset();
+    this.recurring.reset();
+    this.trendSeq++;
     this.s = this.initialState();
   }
 
@@ -310,6 +325,53 @@ export class Ledger {
     });
   }
 
+  /* ---------- 추이 화면 / 반복 내역 ---------- */
+
+  private setView(view: View): void {
+    this.view = view;
+    $('month-view').hidden = view !== 'month';
+    $('trend-view').hidden = view !== 'trend';
+    $('tab-month').setAttribute('aria-selected', String(view === 'month'));
+    $('tab-trend').setAttribute('aria-selected', String(view === 'trend'));
+    if (view === 'trend') void this.loadTrend();
+  }
+
+  private async loadTrend(): Promise<void> {
+    const seq = ++this.trendSeq;
+    const months = TrendView.months(this.currentMonth);
+    this.trend.setMessage('불러오는 중입니다.');
+    try {
+      const rows = await fetchRange(`${months[0]}-01`, monthRange(months[months.length - 1])[1]);
+      if (seq !== this.trendSeq) return;
+      this.trend.render(rows, months);
+      this.trend.renderTop(rows);
+    } catch (e) {
+      if (seq !== this.trendSeq) return;
+      this.trend.setMessage(
+        `<strong>추이를 불러오지 못했습니다</strong>${esc(describeError(e, '불러오기'))}<br>` +
+          `<button type="button" class="btn ghost" data-act="trend-retry">다시 시도</button>`,
+      );
+    }
+  }
+
+  /** 추이 표에서 월을 누르면 그 달의 내역 화면으로 이동한다. */
+  private openMonth(month: string): void {
+    if (this.s.query !== '') {
+      $<HTMLInputElement>('search-input').value = '';
+      $('search-clear').hidden = true;
+      this.s.query = '';
+    }
+    this.setView('month');
+    if (month === this.s.month) void this.load(true);
+    else this.setMonth(month);
+  }
+
+  private onRecurringGenerated(count: number): void {
+    toast(`반복 내역 ${count}건을 기록했습니다.`);
+    void this.load(true);
+    if (this.view === 'trend') void this.loadTrend();
+  }
+
   /** 이 달 지출 현황. 검색 결과 화면에서는 월 데이터가 아니므로 빈 목록이다. */
   private budgetStatuses(): BudgetStatus[] {
     if (this.s.query || this.s.loading || this.s.error) return [];
@@ -540,6 +602,12 @@ export class Ledger {
     });
     $('cat-manage-btn').addEventListener('click', () => void this.cats.open('expense'));
     $('cat-manage-link').addEventListener('click', () => void this.cats.open(this.selectedType()));
+    $('tab-month').addEventListener('click', () => this.setView('month'));
+    $('tab-trend').addEventListener('click', () => this.setView('trend'));
+    $('rec-btn').addEventListener('click', () => void this.recurring.open());
+    $('trend-msg').addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('[data-act="trend-retry"]')) void this.loadTrend();
+    });
     $('budget-btn').addEventListener('click', () => void this.budgets.open(this.cats.names('expense')));
     $('export-btn').addEventListener('click', () => this.exportCurrent());
     $('export-all-btn').addEventListener('click', () => void this.exportAll());

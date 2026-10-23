@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { DEFAULT_CATEGORIES, type Budget, type Category, type Tx, type TxInput, type TxType } from './types';
+import { DEFAULT_CATEGORIES, type Budget, type Category, type RecurringInput, type RecurringRule, type Tx, type TxInput, type TxType } from './types';
 import { monthRange } from './util/dates';
 import { buildSearchFilter } from './util/search';
 
@@ -147,4 +147,81 @@ export async function saveBudgets(changes: {
     const { error } = await supabase.from('budgets').delete().in('category', [...changes.deletes]);
     if (error) throw error;
   }
+}
+
+/* ---------- 기간 조회 (추이) ---------- */
+
+/** [from, to) 기간의 모든 내역. 한 번에 1000건 제한이 있어 나눠서 가져온다. */
+export async function fetchRange(from: string, to: string): Promise<Tx[]> {
+  const PAGE = 1000;
+  const out: Tx[] = [];
+  for (let start = 0; ; start += PAGE) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select(COLUMNS)
+      .gte('occurred_on', from)
+      .lt('occurred_on', to)
+      .order('occurred_on', { ascending: true })
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(start, start + PAGE - 1);
+    if (error) throw error;
+    const page = (data ?? []) as Tx[];
+    out.push(...page);
+    if (page.length < PAGE) break;
+  }
+  return out;
+}
+
+/* ---------- 반복 내역 ---------- */
+
+const RULE_COLUMNS = 'id,type,amount,category,memo,day_of_month,start_date,end_date,generated_through';
+
+export async function fetchRules(): Promise<RecurringRule[]> {
+  const { data, error } = await supabase
+    .from('recurring_rules')
+    .select(RULE_COLUMNS)
+    .order('day_of_month', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as RecurringRule[];
+}
+
+export async function saveRule(id: string | null, input: RecurringInput): Promise<void> {
+  if (id === null) {
+    const { error } = await supabase.from('recurring_rules').insert(input);
+    if (error) throw error;
+    return;
+  }
+  const { data, error } = await supabase.from('recurring_rules').update(input).eq('id', id).select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error('not_found');
+}
+
+/** 규칙만 지운다. 이미 만들어진 내역은 그대로 남는다. */
+export async function deleteRule(id: string): Promise<void> {
+  const { error } = await supabase.from('recurring_rules').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export interface GeneratedTx extends TxInput {
+  recurring_id: string;
+  /** 회차가 속한 달의 1일 */
+  recurring_period: string;
+}
+
+/** 반복 내역의 회차를 내역으로 만든다. 이미 있는 회차는 건너뛰며, 실제로 만들어진 건수를 돌려준다. */
+export async function insertGenerated(rows: readonly GeneratedTx[]): Promise<number> {
+  if (rows.length === 0) return 0;
+  const { data, error } = await supabase
+    .from('transactions')
+    .upsert([...rows], { onConflict: 'recurring_id,recurring_period', ignoreDuplicates: true })
+    .select('id');
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+export async function setGeneratedThrough(id: string, through: string): Promise<void> {
+  const { error } = await supabase.from('recurring_rules').update({ generated_through: through }).eq('id', id);
+  if (error) throw error;
 }

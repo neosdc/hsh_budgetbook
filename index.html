@@ -33,6 +33,15 @@
         </div>
       </header>
 
+      <div class="viewbar">
+        <div class="tabs" role="tablist" aria-label="화면 선택">
+          <button type="button" role="tab" id="tab-month" class="tab" aria-selected="true" aria-controls="month-view">월별 내역</button>
+          <button type="button" role="tab" id="tab-trend" class="tab" aria-selected="false" aria-controls="trend-view">추이</button>
+        </div>
+        <button type="button" id="rec-btn" class="btn ghost small">반복 내역</button>
+      </div>
+
+      <div id="month-view" role="tabpanel" aria-labelledby="tab-month">
       <form id="search-form" class="search" role="search">
         <input type="search" id="search-input" maxlength="40" autocomplete="off" placeholder="메모, 분류, 금액 검색 (전체 기간)" aria-label="내역 검색" />
         <button type="button" id="search-clear" class="icon-btn" hidden aria-label="검색 지우기">
@@ -85,6 +94,37 @@
           </div>
           <div id="cats"></div>
         </aside>
+      </div>
+      </div>
+
+      <div id="trend-view" role="tabpanel" aria-labelledby="tab-trend" hidden>
+        <p id="trend-msg" class="empty" hidden></p>
+        <div id="trend-body">
+          <div class="trend-head">
+            <h2>최근 12개월</h2>
+            <div class="legend" aria-hidden="true"><span class="lg income">수입</span><span class="lg expense">지출</span></div>
+          </div>
+          <section id="trend-stats" class="summary stats4" aria-label="12개월 요약"></section>
+          <div class="chart-card">
+            <div class="chart-scroll">
+              <div id="trend-chart" class="chart"></div>
+              <div id="trend-tip" class="tip" hidden></div>
+            </div>
+          </div>
+          <div class="cols">
+            <section aria-labelledby="trend-table-title">
+              <h2 id="trend-table-title" class="sub-title">월별 합계 <span class="count">월을 누르면 그 달 내역으로 이동</span></h2>
+              <table class="trend-table">
+                <thead><tr><th scope="col">월</th><th scope="col">수입</th><th scope="col">지출</th><th scope="col">잔액</th></tr></thead>
+                <tbody id="trend-rows"></tbody>
+              </table>
+            </section>
+            <aside class="side" aria-labelledby="trend-cat-title">
+              <h2 id="trend-cat-title">지출 분류 상위 5</h2>
+              <div id="trend-cats"></div>
+            </aside>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -161,6 +201,65 @@
           <span class="spacer"></span>
           <button type="button" id="cat-done" class="btn ghost">닫기</button>
         </div>
+      </div>
+    </dialog>
+
+    <dialog id="rec-dlg" aria-labelledby="rec-dlg-title">
+      <div class="dlg-body">
+        <div class="dlg-head">
+          <h2 id="rec-dlg-title">반복 내역</h2>
+          <button type="button" id="rec-close" class="icon-btn" aria-label="닫기">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" /></svg>
+          </button>
+        </div>
+        <p class="hint">매달 정해진 날에 내역이 자동으로 기록됩니다. 앱을 열 때 아직 기록되지 않은 회차를 만들며, 한동안 열지 않았다면 밀린 회차도 한꺼번에 기록합니다. 31일처럼 없는 날짜가 있는 달에는 그 달 마지막 날에 기록합니다.</p>
+        <ul id="rec-list" class="rec-list"></ul>
+        <form id="rec-form" class="rec-form" novalidate>
+          <h3 id="rec-form-title">새 반복 내역</h3>
+          <div class="seg" role="radiogroup" aria-label="구분">
+            <input type="radio" name="rec-type" id="rec-type-expense" value="expense" checked />
+            <label for="rec-type-expense">지출</label>
+            <input type="radio" name="rec-type" id="rec-type-income" value="income" />
+            <label for="rec-type-income">수입</label>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="rec-amount">금액</label>
+              <input type="text" id="rec-amount" inputmode="numeric" autocomplete="off" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="rec-day">날짜</label>
+              <select id="rec-day"></select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="rec-category">분류</label>
+              <select id="rec-category"></select>
+            </div>
+            <div class="field">
+              <label for="rec-memo">메모</label>
+              <input type="text" id="rec-memo" maxlength="60" autocomplete="off" placeholder="예: 월세" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="rec-start">시작일</label>
+              <input type="date" id="rec-start" />
+            </div>
+            <div class="field">
+              <label for="rec-end">종료일 (선택)</label>
+              <input type="date" id="rec-end" />
+            </div>
+          </div>
+          <p id="rec-error" class="error" role="alert" hidden></p>
+          <div class="dlg-actions">
+            <button type="button" id="rec-done" class="btn ghost">닫기</button>
+            <span class="spacer"></span>
+            <button type="button" id="rec-cancel-edit" class="btn ghost" hidden>수정 취소</button>
+            <button type="submit" id="rec-save" class="btn primary">추가</button>
+          </div>
+        </form>
       </div>
     </dialog>
 

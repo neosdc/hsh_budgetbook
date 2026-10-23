@@ -30,6 +30,23 @@ export interface Category {
   sort_order: number;
 }
 
+/** 반복 내역 규칙 한 행 (public.recurring_rules). 매달 day_of_month일에 내역을 만든다. */
+export interface RecurringRule {
+  id: string;
+  type: TxType;
+  amount: number;
+  category: string;
+  memo: string;
+  day_of_month: number;
+  start_date: string;
+  end_date: string | null;
+  /** 마지막으로 처리한 회차의 달(YYYY-MM-01) */
+  generated_through: string | null;
+}
+
+/** 반복 내역 등록/수정 입력값 */
+export type RecurringInput = Omit<RecurringRule, 'id' | 'generated_through'>;
+
 /** 월 예산 한 행 (public.budgets). category가 빈 문자열이면 전체 지출 예산이다. */
 export interface Budget {
   id: string;

@@ -15,6 +15,8 @@
   --expense: #b43a28;
   --expense-bg: #fae6e1;
   --warn: #8a5a00;
+  --c-income: #1c5fa6;
+  --c-expense: #b43a28;
   --focus: #1c7f68;
   --font-display: 'Gowun Batang', 'Batang', 'AppleMyungjo', serif;
   --font-body: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
@@ -36,6 +38,8 @@
     --expense: #f08d7a;
     --expense-bg: #3a211c;
     --warn: #e6b94d;
+    --c-income: #4f8fd6;
+    --c-expense: #d9694f;
     --focus: #7ad6bb;
     color-scheme: dark;
   }
@@ -267,3 +271,72 @@ input[type='text'], input[type='date'], select {
 .bud-field { position: relative; flex: none; width: 170px; }
 .bud-field input { text-align: right; padding-right: 34px; font-variant-numeric: tabular-nums; }
 .bud-field span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+
+/* 화면 전환 탭 */
+.viewbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 16px; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.tab { border: 0; background: transparent; padding: 8px 16px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.tab + .tab { border-left: 1px solid var(--line); }
+.tab[aria-selected='true'] { background: var(--accent); color: var(--accent-fg); }
+
+/* 추이 */
+.trend-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 16px 0 12px; }
+.trend-head h2 { font-family: var(--font-display); font-size: 22px; margin: 0; }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); }
+.lg::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.lg.income::before { background: var(--c-income); }
+.lg.expense::before { background: var(--c-expense); }
+.stats4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 720px) {
+  .stats4 { grid-template-columns: 1fr 1fr; }
+  .stats4 .sum-item:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
+  .stats4 .sum-item:nth-child(4) { border-top: 1px solid var(--line); }
+}
+.chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 8px 4px; margin: 16px 0; }
+.chart-scroll { position: relative; overflow-x: auto; }
+.chart { min-width: 560px; }
+.chart svg { display: block; width: 100%; height: auto; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .grid.base { stroke: var(--muted); }
+.chart .tick { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.chart .bar.income { fill: var(--c-income); }
+.chart .bar.expense { fill: var(--c-expense); }
+.chart .hit { fill: transparent; }
+.chart .grp.on .hit { fill: var(--surface-2); }
+.tip {
+  position: absolute; top: 4px; transform: translateX(-50%); z-index: 2; pointer-events: none;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); display: grid; gap: 2px; white-space: nowrap;
+}
+.tip .tip-row { font-variant-numeric: tabular-nums; }
+.tip .tip-row.income::before, .tip .tip-row.expense::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+.tip .tip-row.income::before { background: var(--c-income); }
+.tip .tip-row.expense::before { background: var(--c-expense); }
+.sub-title { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+.sub-title .count { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 8px; }
+.trend-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+.trend-table th, .trend-table td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+.trend-table thead th { color: var(--muted); font-weight: 500; font-size: 12px; }
+.trend-table th:first-child { text-align: left; }
+.trend-table tbody th { font-weight: 500; }
+.trend-table td.neg { color: var(--expense); }
+.trend-table td.income { color: var(--income); }
+.trend-table td.expense { color: var(--expense); }
+.trend-table .link-btn { font-size: 14px; color: var(--fg); }
+
+/* 반복 내역 */
+.rec-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); max-height: 32vh; overflow-y: auto; }
+.rec-list .hint { padding: 10px 0; }
+.rec-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+.rec-main { min-width: 0; }
+.rec-title { display: flex; gap: 10px; align-items: baseline; font-weight: 500; }
+.rec-amt { font-variant-numeric: tabular-nums; font-size: 14px; }
+.rec-amt.income { color: var(--income); }
+.rec-amt.expense { color: var(--expense); }
+.rec-sub { font-size: 12px; color: var(--muted); }
+.rec-form { display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 14px; }
+.rec-form h3 { margin: 0; font-size: 15px; }
+#rec-type-expense:checked + label { background: var(--expense-bg); color: var(--expense); }
+#rec-type-income:checked + label { background: var(--income-bg); color: var(--income); }
+#rec-dlg { width: min(520px, calc(100vw - 32px)); }
+@media (max-width: 420px) { .rec-row { flex-wrap: wrap; } .rec-row .cat-btns { width: 100%; justify-content: flex-end; } }

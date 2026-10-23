@@ -1,0 +1,22 @@
+{
+  "name": "hsh-budgetbook",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "수입과 지출을 관리하는 가계부 웹 애플리케이션 (GitHub Pages + Supabase)",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>가계부</title>
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <p id="boot" class="boot">불러오는 중입니다.</p>
+
+    <main id="login-view" class="login" hidden>
+      <h1>가계부</h1>
+      <p class="login-lead">수입과 지출을 기록하고, 월별 잔액과 지출 분류를 한눈에 확인합니다.</p>
+      <button id="login-btn" class="btn primary" type="button">Google 계정으로 로그인</button>
+      <p id="login-error" class="error" role="alert" hidden></p>
+    </main>
+
+    <div id="app-view" class="wrap" hidden>
+      <header class="top">
+        <h1>가계부</h1>
+        <div class="top-actions">
+          <span id="who" class="who"></span>
+          <button id="logout-btn" class="btn ghost" type="button">로그아웃</button>
+          <button id="add-btn" class="btn primary" type="button">내역 추가</button>
+        </div>
+      </header>
+
+      <nav class="month" aria-label="월 선택">
+        <button id="prev-btn" class="icon-btn" type="button" aria-label="이전 달">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5" /></svg>
+        </button>
+        <h2 id="month-label"></h2>
+        <button id="next-btn" class="icon-btn" type="button" aria-label="다음 달">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4.5 13 10l-5.5 5.5" /></svg>
+        </button>
+        <button id="today-btn" class="btn ghost" type="button" hidden>이번 달</button>
+      </nav>
+
+      <section id="summary" class="summary" aria-label="월 요약"></section>
+
+      <div class="cols">
+        <section aria-labelledby="list-title">
+          <div class="list-head">
+            <h2 id="list-title">내역<span id="list-count" class="count"></span></h2>
+            <div id="filters" class="filters" role="group" aria-label="구분 필터">
+              <button type="button" class="chip" data-filter="all" aria-pressed="true">전체</button>
+              <button type="button" class="chip" data-filter="expense" aria-pressed="false">지출</button>
+              <button type="button" class="chip" data-filter="income" aria-pressed="false">수입</button>
+            </div>
+          </div>
+          <div id="list"></div>
+        </section>
+
+        <aside class="side" aria-labelledby="cat-title">
+          <h2 id="cat-title">지출 분류</h2>
+          <div id="cats"></div>
+        </aside>
+      </div>
+
+      <p class="note">내역은 Supabase에 저장되며, 로그인한 계정으로만 조회하고 수정할 수 있습니다.</p>
+    </div>
+
+    <dialog id="dlg" aria-labelledby="dlg-title">
+      <form id="tx-form" novalidate>
+        <div class="dlg-head">
+          <h2 id="dlg-title">내역 추가</h2>
+          <button type="button" id="dlg-close" class="icon-btn" aria-label="닫기">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" /></svg>
+          </button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="구분">
+          <input type="radio" name="type" id="type-expense" value="expense" checked />
+          <label for="type-expense">지출</label>
+          <input type="radio" name="type" id="type-income" value="income" />
+          <label for="type-income">수입</label>
+        </div>
+        <div class="field">
+          <label for="f-amount">금액</label>
+          <div class="amount-wrap">
+            <input type="text" id="f-amount" inputmode="numeric" autocomplete="off" placeholder="0" />
+            <span>원</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-date">날짜</label>
+            <input type="date" id="f-date" />
+          </div>
+          <div class="field">
+            <label for="f-category">분류</label>
+            <select id="f-category"></select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-memo">메모</label>
+          <input type="text" id="f-memo" maxlength="60" autocomplete="off" placeholder="예: 점심 김치찌개" />
+        </div>
+        <p id="form-error" class="error" role="alert" hidden></p>
+        <div class="dlg-actions">
+          <button type="button" id="del-btn" class="btn danger" hidden>삭제</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancel-btn" class="btn ghost">취소</button>
+          <button type="submit" id="save-btn" class="btn primary">저장</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"><span></span></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

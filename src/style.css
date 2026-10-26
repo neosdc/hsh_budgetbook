@@ -278,6 +278,8 @@ input[type='text'], input[type='date'], select {
 .tab { border: 0; background: transparent; padding: 8px 16px; font-weight: 600; color: var(--muted); cursor: pointer; }
 .tab + .tab { border-left: 1px solid var(--line); }
 .tab[aria-selected='true'] { background: var(--accent); color: var(--accent-fg); }
+.viewbar-actions { display: flex; gap: 6px; }
+a.btn { display: inline-block; text-decoration: none; }
 
 /* 추이 */
 .trend-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 16px 0 12px; }

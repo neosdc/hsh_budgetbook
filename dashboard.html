@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>3D 대시보드 · 가계부</title>
+    <link rel="icon" href="%BASE_URL%favicon.ico?v=2" sizes="any" />
+    <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <meta name="theme-color" content="#14594a" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <p id="boot" class="boot">불러오는 중입니다.</p>
+
+    <main id="need-login" class="login" hidden>
+      <h1>3D 대시보드</h1>
+      <p class="login-lead">가계부에 로그인한 뒤 열 수 있습니다.</p>
+      <a class="btn primary" href="./">가계부로 가서 로그인</a>
+    </main>
+
+    <div id="dash-view" class="wrap dash-wrap" hidden>
+      <header class="top">
+        <h1>3D 대시보드</h1>
+        <div class="top-actions">
+          <a class="btn ghost" href="./">가계부로</a>
+        </div>
+      </header>
+
+      <div class="dash-controls">
+        <div class="tabs" role="group" aria-label="보기 방식">
+          <button type="button" class="tab" data-mode="days" aria-pressed="true">한 달 · 일별</button>
+          <button type="button" class="tab" data-mode="months" aria-pressed="false">12개월 · 월별</button>
+        </div>
+        <nav class="month dash-month" aria-label="기간 선택">
+          <button id="prev-btn" class="icon-btn" type="button" aria-label="이전 달">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5" /></svg>
+          </button>
+          <h2 id="period-label"></h2>
+          <button id="next-btn" class="icon-btn" type="button" aria-label="다음 달">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4.5 13 10l-5.5 5.5" /></svg>
+          </button>
+        </nav>
+        <div class="tabs scale-tabs" role="group" aria-label="막대 높이">
+          <button type="button" class="tab" data-scale="linear" aria-pressed="true">금액 비례</button>
+          <button type="button" class="tab" data-scale="sqrt" aria-pressed="false">작은 금액 강조</button>
+        </div>
+      </div>
+
+      <section id="dash-stats" class="summary stats4" aria-label="기간 요약"></section>
+
+      <section class="stage-card" aria-label="3D 막대 그래프">
+        <div class="stage-head">
+          <div class="legend">
+            <span class="lg income">수입</span>
+            <span class="lg expense">지출</span>
+          </div>
+          <p class="stage-hint">
+            <span class="hint-fine">끌어서 돌리기 · 휠로 확대 · 막대를 누르면 내역</span>
+            <span class="hint-touch">한 손가락으로 돌리기 · 두 손가락으로 확대 · 막대를 누르면 내역</span>
+          </p>
+          <button id="reset-view" type="button" class="btn ghost small">시점 초기화</button>
+        </div>
+        <div id="stage" class="stage">
+          <div id="stage-tip" class="tip stage-tip" hidden></div>
+          <p id="stage-msg" class="stage-msg" hidden></p>
+        </div>
+        <p id="scale-note" class="scale-note" hidden>막대 높이가 금액의 제곱근에 비례합니다. 작은 지출이 잘 보이지만, 막대 높이 차이가 실제 금액 차이보다 작아 보입니다.</p>
+      </section>
+
+      <section id="pick" class="pick" aria-live="polite" hidden>
+        <div class="pick-head">
+          <h2 id="pick-title"></h2>
+          <button id="pick-close" type="button" class="icon-btn small" aria-label="닫기">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" /></svg>
+          </button>
+        </div>
+        <ul id="pick-list" class="pick-list"></ul>
+      </section>
+
+      <details id="table-view" class="table-view">
+        <summary>표로 보기</summary>
+        <div class="table-scroll">
+          <table class="trend-table dash-table">
+            <thead>
+              <tr><th scope="col" id="table-col-head">날짜</th><th scope="col">구분</th><th scope="col">분류</th><th scope="col">건수</th><th scope="col">금액</th></tr>
+            </thead>
+            <tbody id="table-rows"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+
+    <script type="module" src="/src/dashboard/main.ts"></script>
+  </body>
+</html>

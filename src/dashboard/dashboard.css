@@ -1,0 +1,84 @@
+/* 3D 대시보드. 색과 글꼴은 style.css의 변수를 그대로 쓴다. */
+.dash-wrap { max-width: 1200px; }
+a.btn { display: inline-block; text-decoration: none; text-align: center; }
+.login a.btn { padding: 12px 20px; font-size: 15px; }
+
+.dash-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 16px 0; }
+.dash-controls .tab[aria-pressed='true'] { background: var(--accent); color: var(--accent-fg); }
+.dash-month { margin: 0; }
+.dash-month h2 { font-size: 19px; min-width: 6.5em; }
+@media (max-width: 720px) {
+  .dash-month { order: -1; width: 100%; justify-content: center; }
+  .dash-controls .tabs { flex: 1 1 100%; }
+  .dash-controls .tab { flex: 1; padding-inline: 8px; }
+}
+
+.top-cat { font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top-amt { display: block; font-size: 13px; font-weight: 400; color: var(--muted); }
+
+.stage-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin: 16px 0; overflow: hidden; }
+.stage-head { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.stage-hint { margin: 0 auto 0 0; font-size: 12px; color: var(--muted); }
+.hint-touch { display: none; }
+@media (pointer: coarse) { .hint-fine { display: none; } .hint-touch { display: inline; } }
+
+.stage {
+  position: relative; height: min(68vh, 640px); min-height: 360px;
+  background: radial-gradient(ellipse at 50% 35%, var(--surface) 0%, var(--surface-2) 100%);
+  transition: opacity 0.2s;
+}
+.stage.loading { opacity: 0.55; }
+.stage-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.stage-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.stage-tip { top: 0; left: 0; transform: none; }
+.stage-tip .tip-amt { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stage-tip .tip-n { font-size: 12px; font-weight: 400; color: var(--muted); }
+.stage-msg {
+  position: absolute; left: 50%; top: 16px; transform: translateX(-50%); z-index: 2; margin: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px;
+  font-size: 14px; color: var(--muted); max-width: calc(100% - 32px); text-align: center;
+}
+.scale-note { margin: 0; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .stage { transition: none; } }
+
+/* 3D 장면 위에 얹는 글자(CSS2DRenderer). 위치는 렌더러가 transform으로 정한다. */
+.lbl { font-family: var(--font-body); font-size: 12px; color: var(--muted); white-space: nowrap; user-select: none; }
+.lbl.col { font-variant-numeric: tabular-nums; }
+/* 분류 이름과 금액 눈금은 기준점에서 한쪽으로만 뻗게 한다(폭 0 상자 + 절대 위치). */
+.lbl.lane, .lbl.tick { width: 0; height: 0; }
+.lbl.lane span, .lbl.tick span { position: absolute; top: 0; transform: translateY(-50%); }
+.lbl.lane span { left: 0; color: var(--fg); display: inline-flex; align-items: center; gap: 5px; }
+.lbl.lane span::before { content: ''; width: 7px; height: 7px; border-radius: 2px; flex: none; }
+.lbl.lane.income span::before { background: var(--c-income); }
+.lbl.lane.expense span::before { background: var(--c-expense); }
+.lbl.tick span { right: 0; font-size: 11px; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .lbl { font-size: 11px; } .lbl.tick span { font-size: 10px; } }
+/* 세로 화면 시점: 분류 이름이 바닥 아래쪽 끝에서 아래로 세로쓰기로 뻗는다. */
+.stage.portrait .lbl.lane span { display: block; top: 4px; left: 0; transform: translateX(-50%); writing-mode: vertical-rl; }
+.stage.portrait .lbl.lane span::before { display: inline-block; margin-inline-end: 4px; }
+
+/* 막대를 눌렀을 때의 내역 목록 */
+.pick { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 16px 0; }
+.pick-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pick-head h2 { font-size: 15px; font-weight: 600; margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 6px; }
+.pick-head .lg::before { margin-right: 0; }
+.pick-total { margin-left: 6px; font-variant-numeric: tabular-nums; }
+.pick-total.income { color: var(--income); }
+.pick-total.expense { color: var(--expense); }
+.pick-list { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); max-height: 40vh; overflow-y: auto; }
+.pick-list li { display: flex; align-items: baseline; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.pick-list li:last-child { border-bottom: 0; }
+.pick-date { flex: none; width: 3em; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pick-memo { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+
+/* 표로 보기: 3D 그래프와 같은 값을 표로 */
+.table-view { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin: 16px 0; }
+.table-view summary { cursor: pointer; padding: 12px 16px; font-weight: 600; font-size: 15px; }
+.table-scroll { overflow-x: auto; padding: 0 16px 12px; }
+.dash-table { min-width: 420px; }
+.dash-table td.kind, .dash-table td.cat-cell { text-align: left; }
+.dash-table td.kind.income { color: var(--income); }
+.dash-table td.kind.expense { color: var(--expense); }
+.dash-table td.none { text-align: center; color: var(--muted); }
+.dash-table th:nth-child(2), .dash-table th:nth-child(3) { text-align: left; }

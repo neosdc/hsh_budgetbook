@@ -64,7 +64,7 @@ export function placeOptionsHtml(selected: string, esc: (s: string) => string): 
   const legacy = selected !== '' && !isPlaceValue(selected) ? opt(selected, `${selected} (목록에 없는 값)`) : '';
   return (
     opt('', `선택 안 함 (${DEFAULT_PLACE})`) +
-    `<optgroup label="사람">${PERSONS.map((p) => opt(p, `${p} → ${PERSON_PLACE[p]}`)).join('')}</optgroup>` +
+    `<optgroup label="사람">${PERSONS.map((p) => opt(p, p)).join('')}</optgroup>` +
     `<optgroup label="위치">${PLACES.map((p) => opt(p, p)).join('')}</optgroup>` +
     legacy
   );

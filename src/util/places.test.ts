@@ -43,7 +43,7 @@ describe('입력 목록', () => {
 
   it('select 옵션: 선택 표시, 사람과 위치 묶음, 목록에 없는 기존 값 보존', () => {
     const html = placeOptionsHtml('윤지', esc);
-    expect(html).toContain('<option value="윤지" selected>윤지 → 윤지방</option>');
+    expect(html).toContain('<option value="윤지" selected>윤지</option>');
     expect(html).toContain('<optgroup label="사람">');
     expect(html).toContain('<optgroup label="위치">');
     expect(placeOptionsHtml('베란다', esc)).toContain('<option value="베란다" selected>베란다 (목록에 없는 값)</option>');

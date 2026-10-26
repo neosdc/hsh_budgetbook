@@ -8,6 +8,7 @@ import { CategoryManager, type CategoryChange } from './categories';
 import type { Tx, TxInput, TxType } from './types';
 import { OVERALL, budgetStatuses, worsened, type BudgetStatus } from './util/budget';
 import { categoryOptions } from './util/categories';
+import { placeOptionsHtml } from './util/places';
 import { toCsv, safeFileName } from './util/csv';
 import { dayLabel, fullDateLabel, monthLabel, monthOf, monthRange, shiftMonth, todayStr } from './util/dates';
 import { digitsOnly, esc, won } from './util/format';
@@ -291,7 +292,7 @@ export class Ledger {
           .map((t) => {
             const sign = t.type === 'income' ? '+' : '−';
             const title = t.memo || t.category;
-            const sub = t.memo ? t.category : t.type === 'income' ? '수입' : '지출';
+            const sub = [t.memo ? t.category : t.type === 'income' ? '수입' : '지출', t.place].filter(Boolean).join(' · ');
             return (
               `<button type="button" class="row" data-id="${esc(t.id)}">` +
               `<span class="tile ${t.type}" aria-hidden="true">${esc(Array.from(t.category)[0] ?? '')}</span>` +
@@ -482,6 +483,7 @@ export class Ledger {
         ? todayStr()
         : `${this.s.month}-01`;
     $<HTMLInputElement>('f-memo').value = tx?.memo ?? '';
+    $<HTMLSelectElement>('f-place').innerHTML = placeOptionsHtml(tx?.place ?? '', esc);
     $('del-btn').hidden = !tx;
     this.dlg.showModal();
     this.amountInput.focus();
@@ -515,6 +517,7 @@ export class Ledger {
       occurred_on: date,
       category: $<HTMLSelectElement>('f-category').value,
       memo: $<HTMLInputElement>('f-memo').value.trim(),
+      place: $<HTMLSelectElement>('f-place').value,
     };
 
     this.showFormError('');

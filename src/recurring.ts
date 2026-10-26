@@ -3,6 +3,7 @@ import { $, formatAmountField, toast } from './dom';
 import { describeError } from './errors';
 import type { RecurringInput, RecurringRule, TxType } from './types';
 import { categoryOptions } from './util/categories';
+import { placeOptionsHtml } from './util/places';
 import { monthOf, shiftMonth, todayStr } from './util/dates';
 import { digitsOnly, esc, won } from './util/format';
 import { dueOccurrences } from './util/recurring';
@@ -67,6 +68,7 @@ export class RecurringManager {
           occurred_on: o.occurred_on,
           category: r.category,
           memo: r.memo,
+          place: r.place,
           recurring_id: r.id,
           recurring_period: o.period,
         });
@@ -126,7 +128,7 @@ export class RecurringManager {
           `<li class="rec-row" data-id="${esc(r.id)}">` +
           `<div class="rec-main"><div class="rec-title">${esc(r.memo || r.category)}` +
           `<span class="rec-amt ${r.type}">${sign}${won(r.amount)}원</span></div>` +
-          `<div class="rec-sub">매월 ${r.day_of_month}일 · ${esc(r.category)} · ${esc(period)}</div></div>` +
+          `<div class="rec-sub">매월 ${r.day_of_month}일 · ${esc(r.category)}${r.place ? ` · ${esc(r.place)}` : ''} · ${esc(period)}</div></div>` +
           `<span class="cat-btns"><button type="button" class="btn ghost small" data-act="edit">수정</button>` +
           `<button type="button" class="btn danger small" data-act="delete">${armed ? '삭제 확인' : '삭제'}</button></span></li>`
         );
@@ -161,6 +163,7 @@ export class RecurringManager {
     $<HTMLInputElement>('rec-start').value = rule?.start_date ?? todayStr();
     $<HTMLInputElement>('rec-end').value = rule?.end_date ?? '';
     $<HTMLInputElement>('rec-memo').value = rule?.memo ?? '';
+    $<HTMLSelectElement>('rec-place').innerHTML = placeOptionsHtml(rule?.place ?? '', esc);
     $('rec-cancel-edit').hidden = rule === null;
     $<HTMLButtonElement>('rec-save').textContent = rule ? '수정 저장' : '추가';
   }
@@ -190,6 +193,7 @@ export class RecurringManager {
       amount,
       category: $<HTMLSelectElement>('rec-category').value,
       memo: $<HTMLInputElement>('rec-memo').value.trim(),
+      place: $<HTMLSelectElement>('rec-place').value,
       day_of_month: Number($<HTMLSelectElement>('rec-day').value),
       start_date: start,
       end_date: end === '' ? null : end,

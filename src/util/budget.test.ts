@@ -9,6 +9,7 @@ const tx = (category: string, amount: number, type: Tx['type'] = 'expense'): Tx 
   occurred_on: '2026-10-05',
   category,
   memo: '',
+  place: '',
   created_at: '2026-10-05T00:00:00Z',
 });
 const budget = (category: string, amount: number): Budget => ({ id: `b-${category}`, category, amount });

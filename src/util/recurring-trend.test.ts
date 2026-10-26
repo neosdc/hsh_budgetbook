@@ -78,6 +78,7 @@ const tx = (date: string, type: Tx['type'], amount: number, category = '식비')
   occurred_on: date,
   category,
   memo: '',
+  place: '',
   created_at: date,
 });
 

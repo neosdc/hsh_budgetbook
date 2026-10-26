@@ -172,6 +172,11 @@
           <label for="f-memo">메모</label>
           <input type="text" id="f-memo" maxlength="60" autocomplete="off" placeholder="예: 점심 김치찌개" />
         </div>
+        <div class="field">
+          <label for="f-place">위치·사람</label>
+          <select id="f-place" aria-describedby="f-place-hint"></select>
+          <p id="f-place-hint" class="field-hint">3D 대시보드의 "우리 집" 보기에서 이 내역이 놓일 자리입니다. 고르지 않으면 거실에 놓입니다.</p>
+        </div>
         <p id="form-error" class="error" role="alert" hidden></p>
         <div class="dlg-actions">
           <button type="button" id="del-btn" class="btn danger" hidden>삭제</button>
@@ -247,6 +252,10 @@
               <label for="rec-memo">메모</label>
               <input type="text" id="rec-memo" maxlength="60" autocomplete="off" placeholder="예: 월세" />
             </div>
+          </div>
+          <div class="field">
+            <label for="rec-place">위치·사람</label>
+            <select id="rec-place"></select>
           </div>
           <div class="field-row">
             <div class="field">

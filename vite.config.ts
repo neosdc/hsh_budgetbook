@@ -6,8 +6,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   base: '/hsh_budgetbook/',
   build: {
-    // three.js(약 560kB, gzip 140kB)는 대시보드에서만 따로 불러오는 청크라 경고 기준을 그보다 조금 높인다.
-    chunkSizeWarningLimit: 600,
+    // three.js(약 600kB, gzip 150kB)는 대시보드에서만 따로 불러오는 청크라 경고 기준을 그보다 조금 높인다.
+    chunkSizeWarningLimit: 650,
     rolldownOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),

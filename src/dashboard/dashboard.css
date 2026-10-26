@@ -22,12 +22,13 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 .hint-touch { display: none; }
 @media (pointer: coarse) { .hint-fine { display: none; } .hint-touch { display: inline; } }
 
+.stage-wrap { position: relative; transition: opacity 0.2s; }
+.stage-wrap.loading { opacity: 0.55; }
 .stage {
   position: relative; height: min(68vh, 640px); min-height: 360px;
   background: radial-gradient(ellipse at 50% 35%, var(--surface) 0%, var(--surface-2) 100%);
   transition: opacity 0.2s;
 }
-.stage.loading { opacity: 0.55; }
 .stage-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .stage-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .stage-tip { top: 0; left: 0; transform: none; }
@@ -39,7 +40,7 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
   font-size: 14px; color: var(--muted); max-width: calc(100% - 32px); text-align: center;
 }
 .scale-note { margin: 0; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .stage { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .stage-wrap { transition: none; } }
 
 /* 3D 장면 위에 얹는 글자(CSS2DRenderer). 위치는 렌더러가 transform으로 정한다. */
 .lbl { font-family: var(--font-body); font-size: 12px; color: var(--muted); white-space: nowrap; user-select: none; }
@@ -82,3 +83,40 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 .dash-table td.kind.expense { color: var(--expense); }
 .dash-table td.none { text-align: center; color: var(--muted); }
 .dash-table th:nth-child(2), .dash-table th:nth-child(3) { text-align: left; }
+
+/* 우리 집 보기 */
+.house-tools { display: flex; align-items: center; gap: 6px; }
+.small-tabs .tab { padding: 5px 10px; font-size: 13px; font-weight: 500; }
+.btn.toggle[aria-pressed='true'] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.room-card {
+  pointer-events: auto; cursor: pointer; display: grid; gap: 3px; justify-items: center;
+  padding: 5px 9px; border-radius: 9px; border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 92%, transparent); color: var(--fg);
+  font-family: var(--font-body); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+}
+.room-card:hover { border-color: var(--muted); }
+.room-card.on { border-color: var(--expense); box-shadow: 0 0 0 2px var(--expense); }
+.rc-name { font-size: 11px; font-weight: 600; }
+.rc-amt { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rc-amt.zero { color: var(--muted); }
+.rc-pct { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rc-list { gap: 1px; margin-top: 2px; padding-top: 3px; border-top: 1px solid var(--line); min-width: 7em; }
+.rc-row { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; line-height: 1.35; color: var(--muted); }
+.rc-row span:last-child { color: var(--fg); font-variant-numeric: tabular-nums; }
+.rc-short { display: none; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rc-short.zero { color: var(--muted); }
+.rc-list { display: none; }
+/* CSS2DRenderer가 거리순으로 z-index를 매기므로 펼친 카드는 !important로 맨 앞에 둔다. */
+.room-card:hover, .room-card:focus-visible, .room-card.on { z-index: 1000 !important; }
+.room-card:hover .rc-list, .room-card:focus-visible .rc-list, .room-card.on .rc-list { display: grid; }
+@media (max-width: 560px) {
+  .room-card { padding: 3px 7px; gap: 1px; border-radius: 7px; }
+  .rc-name { font-size: 10px; }
+  .rc-amt, .rc-pct, .room-card .rc-list { display: none; }
+  .rc-short { display: block; }
+}
+.pick-pct { color: var(--muted); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.pick-list li.pick-group { padding-top: 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.pick-list li.pick-group .pick-cat { flex: 1; }
+.chip { display: inline-block; margin-left: 4px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 999px; font-size: 11px; color: var(--muted); white-space: nowrap; vertical-align: 1px; }
+.chip.warn { border-color: var(--warn); color: var(--warn); white-space: normal; }

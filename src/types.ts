@@ -10,6 +10,8 @@ export interface Tx {
   occurred_on: string;
   category: string;
   memo: string;
+  /** 위치·사람(집 안 위치 이름 또는 가족 이름). 비어 있으면 정하지 않음. src/util/places.ts 참고 */
+  place: string;
   created_at: string;
 }
 
@@ -20,6 +22,7 @@ export interface TxInput {
   occurred_on: string;
   category: string;
   memo: string;
+  place: string;
 }
 
 /** 사용자 정의 분류 한 행 (public.categories) */
@@ -38,6 +41,8 @@ export interface RecurringRule {
   category: string;
   memo: string;
   day_of_month: number;
+  /** 만들어지는 내역에 그대로 들어가는 위치·사람 */
+  place: string;
   start_date: string;
   end_date: string | null;
   /** 마지막으로 처리한 회차의 달(YYYY-MM-01) */

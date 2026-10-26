@@ -10,6 +10,7 @@ function tx(partial: Partial<Tx> & Pick<Tx, 'type' | 'amount'>): Tx {
     occurred_on: '2026-10-23',
     category: '식비',
     memo: '',
+    place: '',
     created_at: '2026-10-23T00:00:00Z',
     ...partial,
   };

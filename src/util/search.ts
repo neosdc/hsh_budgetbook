@@ -9,14 +9,14 @@ export function quoteFilterValue(value: string): string {
 }
 
 /**
- * 메모 또는 분류에 검색어가 들어 있거나, 검색어가 숫자면 금액이 정확히 같은 행을 찾는 `or()` 필터 문자열.
+ * 메모, 분류, 위치·사람에 검색어가 들어 있거나, 검색어가 숫자면 금액이 정확히 같은 행을 찾는 `or()` 필터 문자열.
  * 검색어가 비어 있으면 null.
  */
 export function buildSearchFilter(raw: string): string | null {
   const term = raw.trim();
   if (!term) return null;
   const pattern = quoteFilterValue(ilikePattern(term));
-  const parts = [`memo.ilike.${pattern}`, `category.ilike.${pattern}`];
+  const parts = [`memo.ilike.${pattern}`, `category.ilike.${pattern}`, `place.ilike.${pattern}`];
   const digits = term.replace(/,/g, '');
   if (/^\d{1,12}$/.test(digits)) parts.push(`amount.eq.${digits}`);
   return parts.join(',');

@@ -14,7 +14,7 @@ import {
 } from './dashboard';
 
 function tx(type: Tx['type'], amount: number, occurred_on: string, category: string, memo = ''): Tx {
-  return { id: `${occurred_on}-${category}-${amount}`, type, amount, occurred_on, category, memo, created_at: `${occurred_on}T00:00:00Z` };
+  return { id: `${occurred_on}-${category}-${amount}`, type, amount, occurred_on, category, memo, place: '', created_at: `${occurred_on}T00:00:00Z` };
 }
 
 const cats: Category[] = [

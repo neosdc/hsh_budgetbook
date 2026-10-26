@@ -3,7 +3,7 @@ import { DEFAULT_CATEGORIES, type Budget, type Category, type RecurringInput, ty
 import { monthRange } from './util/dates';
 import { buildSearchFilter } from './util/search';
 
-const COLUMNS = 'id,type,amount,occurred_on,category,memo,created_at';
+const COLUMNS = 'id,type,amount,occurred_on,category,memo,place,created_at';
 
 /** 해당 월(YYYY-MM)의 내역을 가져온다. 접근 범위는 RLS가 로그인 사용자 본인 행으로 제한한다. */
 export async function fetchMonth(month: string): Promise<Tx[]> {
@@ -22,7 +22,7 @@ export async function fetchMonth(month: string): Promise<Tx[]> {
 /** 검색 결과로 가져오는 최대 건수 */
 export const SEARCH_LIMIT = 200;
 
-/** 전체 기간에서 메모·분류·금액으로 검색한다. 최신 날짜 순이며 SEARCH_LIMIT건을 넘으면 truncated가 true다. */
+/** 전체 기간에서 메모·분류·위치·사람·금액으로 검색한다. 최신 날짜 순이며 SEARCH_LIMIT건을 넘으면 truncated가 true다. */
 export async function searchTx(term: string): Promise<{ rows: Tx[]; truncated: boolean }> {
   const filter = buildSearchFilter(term);
   if (!filter) return { rows: [], truncated: false };
@@ -175,7 +175,7 @@ export async function fetchRange(from: string, to: string): Promise<Tx[]> {
 
 /* ---------- 반복 내역 ---------- */
 
-const RULE_COLUMNS = 'id,type,amount,category,memo,day_of_month,start_date,end_date,generated_through';
+const RULE_COLUMNS = 'id,type,amount,category,memo,place,day_of_month,start_date,end_date,generated_through';
 
 export async function fetchRules(): Promise<RecurringRule[]> {
   const { data, error } = await supabase

@@ -11,6 +11,7 @@ function tx(partial: Partial<Tx> & Pick<Tx, 'type' | 'amount'>): Tx {
     occurred_on: '2026-10-23',
     category: '식비',
     memo: '',
+    place: '',
     created_at: '2026-10-23T00:00:00Z',
     ...partial,
   };
@@ -30,8 +31,8 @@ describe('search filter', () => {
     expect(buildSearchFilter('   ')).toBeNull();
   });
 
-  it('글자 검색어는 메모와 분류만 찾는다', () => {
-    expect(buildSearchFilter(' 점심 ')).toBe('memo.ilike."%점심%",category.ilike."%점심%"');
+  it('글자 검색어는 메모, 분류, 위치·사람만 찾는다', () => {
+    expect(buildSearchFilter(' 점심 ')).toBe('memo.ilike."%점심%",category.ilike."%점심%",place.ilike."%점심%"');
   });
 
   it('숫자 검색어는 같은 금액도 찾고 쉼표를 무시한다', () => {
@@ -42,7 +43,7 @@ describe('search filter', () => {
 
   it('쉼표나 괄호가 있어도 or() 구문이 깨지지 않도록 한 값으로 묶인다', () => {
     const f = buildSearchFilter('a,b)')!;
-    expect(f).toBe('memo.ilike."%a,b)%",category.ilike."%a,b)%"');
+    expect(f).toBe('memo.ilike."%a,b)%",category.ilike."%a,b)%",place.ilike."%a,b)%"');
   });
 });
 
@@ -65,20 +66,20 @@ describe('csv', () => {
 
   it('BOM, 헤더, 날짜 오름차순으로 만든다', () => {
     const csv = toCsv([
-      tx({ type: 'expense', amount: 5000, occurred_on: '2026-10-23', category: '식비', memo: '점심, 김치찌개' }),
+      tx({ type: 'expense', amount: 5000, occurred_on: '2026-10-23', category: '식비', memo: '점심, 김치찌개', place: '부엌' }),
       tx({ type: 'income', amount: 3000000, occurred_on: '2026-10-01', category: '급여' }),
     ]);
     expect(csv.charCodeAt(0)).toBe(0xfeff);
     expect(csv.slice(1).split('\r\n')).toEqual([
-      '날짜,구분,분류,금액,메모',
-      '2026-10-01,수입,급여,3000000,',
-      '2026-10-23,지출,식비,5000,"점심, 김치찌개"',
+      '날짜,구분,분류,금액,메모,위치·사람',
+      '2026-10-01,수입,급여,3000000,,',
+      '2026-10-23,지출,식비,5000,"점심, 김치찌개",부엌',
       '',
     ]);
   });
 
   it('내역이 없으면 헤더만 있다', () => {
-    expect(toCsv([]).slice(1)).toBe('날짜,구분,분류,금액,메모\r\n');
+    expect(toCsv([]).slice(1)).toBe('날짜,구분,분류,금액,메모,위치·사람\r\n');
   });
 
   it('파일 이름에서 사용할 수 없는 문자를 지운다', () => {

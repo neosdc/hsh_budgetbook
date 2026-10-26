@@ -34,9 +34,13 @@
       </header>
 
       <div class="dash-controls">
-        <div class="tabs" role="group" aria-label="보기 방식">
-          <button type="button" class="tab" data-mode="days" aria-pressed="true">한 달 · 일별</button>
-          <button type="button" class="tab" data-mode="months" aria-pressed="false">12개월 · 월별</button>
+        <div class="tabs view-tabs" role="group" aria-label="3D 보기">
+          <button type="button" class="tab" data-view="house" aria-pressed="true">우리 집</button>
+          <button type="button" class="tab" data-view="grid" aria-pressed="false">막대 그래프</button>
+        </div>
+        <div class="tabs" role="group" aria-label="기간">
+          <button type="button" class="tab" data-mode="days" aria-pressed="true">한 달</button>
+          <button type="button" class="tab" data-mode="months" aria-pressed="false">12개월</button>
         </div>
         <nav class="month dash-month" aria-label="기간 선택">
           <button id="prev-btn" class="icon-btn" type="button" aria-label="이전 달">
@@ -55,19 +59,34 @@
 
       <section id="dash-stats" class="summary stats4" aria-label="기간 요약"></section>
 
-      <section class="stage-card" aria-label="3D 막대 그래프">
+      <section id="stage-card" class="stage-card" aria-label="우리 집 3D 모형 위 자리별 지출 막대">
         <div class="stage-head">
           <div class="legend">
-            <span class="lg income">수입</span>
+            <span id="lg-income" class="lg income">수입</span>
             <span class="lg expense">지출</span>
           </div>
           <p class="stage-hint">
-            <span class="hint-fine">끌어서 돌리기 · 휠로 확대 · 막대를 누르면 내역</span>
-            <span class="hint-touch">한 손가락으로 돌리기 · 두 손가락으로 확대 · 막대를 누르면 내역</span>
+            <span id="hint-grid">
+              <span class="hint-fine">끌어서 돌리기 · 휠로 확대 · 막대를 누르면 내역</span>
+              <span class="hint-touch">한 손가락으로 돌리기 · 두 손가락으로 확대 · 막대를 누르면 내역</span>
+            </span>
+            <span id="hint-house">
+              <span class="hint-fine">내역의 위치·사람에 따라 자리를 정합니다 · 카드나 막대를 누르면 내역</span>
+              <span class="hint-touch">카드나 막대를 누르면 내역 · 한 손가락으로 돌리기</span>
+            </span>
           </p>
+          <div id="house-tools" class="house-tools">
+            <div class="tabs small-tabs" role="group" aria-label="벽 높이">
+              <button type="button" class="tab" data-wall="cut" aria-pressed="true">벽 낮게</button>
+              <button type="button" class="tab" data-wall="full" aria-pressed="false">벽 전체</button>
+            </div>
+            <button id="furn-btn" type="button" class="btn ghost small toggle" aria-pressed="true" title="실제 가구가 아닌 배치 예시입니다">가구 예시</button>
+          </div>
           <button id="reset-view" type="button" class="btn ghost small">시점 초기화</button>
         </div>
-        <div id="stage" class="stage">
+        <div id="stage-wrap" class="stage-wrap">
+          <div id="stage" class="stage" hidden></div>
+          <div id="house-stage" class="stage house-stage"></div>
           <div id="stage-tip" class="tip stage-tip" hidden></div>
           <p id="stage-msg" class="stage-msg" hidden></p>
         </div>
@@ -88,9 +107,7 @@
         <summary>표로 보기</summary>
         <div class="table-scroll">
           <table class="trend-table dash-table">
-            <thead>
-              <tr><th scope="col" id="table-col-head">날짜</th><th scope="col">구분</th><th scope="col">분류</th><th scope="col">건수</th><th scope="col">금액</th></tr>
-            </thead>
+            <thead id="table-head"></thead>
             <tbody id="table-rows"></tbody>
           </table>
         </div>

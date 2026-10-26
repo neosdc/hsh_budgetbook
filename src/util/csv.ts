@@ -27,9 +27,9 @@ export function toCsv(rows: readonly Tx[]): string {
           ? 1
           : 0,
   );
-  const lines = [['날짜', '구분', '분류', '금액', '메모'].join(',')];
+  const lines = [['날짜', '구분', '분류', '금액', '메모', '위치·사람'].join(',')];
   for (const t of sorted) {
-    lines.push([t.occurred_on, TYPE_LABEL[t.type], t.category, t.amount, t.memo].map(csvCell).join(','));
+    lines.push([t.occurred_on, TYPE_LABEL[t.type], t.category, t.amount, t.memo, t.place].map(csvCell).join(','));
   }
   return `﻿${lines.join('\r\n')}\r\n`;
 }

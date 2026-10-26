@@ -4,7 +4,8 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 .login a.btn { padding: 12px 20px; font-size: 15px; }
 
 .dash-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 16px 0; }
-.dash-controls .tab[aria-pressed='true'] { background: var(--accent); color: var(--accent-fg); }
+/* 눌린 탭: 상단 조작 줄뿐 아니라 3D 화면 머리글의 벽 높이 탭에도 적용한다. */
+.tabs .tab[aria-pressed='true'] { background: var(--accent); color: var(--accent-fg); }
 .dash-month { margin: 0; }
 .dash-month h2 { font-size: 19px; min-width: 6.5em; }
 @media (max-width: 720px) {

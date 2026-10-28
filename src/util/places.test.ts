@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Tx } from '../types';
 import { esc } from './format';
 import migrationSql from '../../supabase/migrations/20261026000000_add_place.sql?raw';
-import { groupByPlace, isPlaceValue, PERSONS, percentLabel, placeLabel, placeOptionsHtml, PLACES, resolvePlace } from './places';
+import { groupByPlace, incomeRatioLabel, isPlaceValue, PERSONS, percentLabel, placeLabel, placeOptionsHtml, PLACES, resolvePlace } from './places';
 
 function tx(amount: number, category: string, place: string, type: Tx['type'] = 'expense', occurred_on = '2026-10-10'): Tx {
   return { id: `${category}-${amount}`, type, amount, occurred_on, category, memo: '', place, created_at: `${occurred_on}T00:00:00Z` };
@@ -74,6 +74,20 @@ describe('groupByPlace', () => {
     expect(g.get('윤지방')!.map((x) => x.category)).toEqual(['교육']);
     expect(g.get('서재')).toEqual([]);
     expect([...g.keys()]).toEqual([...PLACES]);
+  });
+});
+
+describe('incomeRatioLabel', () => {
+  it('수입 100만, 지출 70만이면 지출 70.0%, 잔액 30.0%', () => {
+    expect(incomeRatioLabel(700_000, 1_000_000)).toBe('70.0%');
+    expect(incomeRatioLabel(300_000, 1_000_000)).toBe('30.0%');
+  });
+  it('지출이 수입보다 많으면 지출은 100% 초과, 잔액은 음수', () => {
+    expect(incomeRatioLabel(1_250_000, 1_000_000)).toBe('125.0%');
+    expect(incomeRatioLabel(-250_000, 1_000_000)).toBe('−25.0%');
+  });
+  it('수입이 없으면 null', () => {
+    expect(incomeRatioLabel(5000, 0)).toBeNull();
   });
 });
 

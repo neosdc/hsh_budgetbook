@@ -169,10 +169,14 @@ export class LedgerScene {
     this.grid = grid;
     this.scale = scale;
     this.height = grid.mode === 'days' ? 8 : 6.5;
-    this.colW = grid.mode === 'days' ? 0.8 : 1.5;
+    this.colW = grid.mode === 'days' ? 0.8 : grid.mode === 'category' ? 1.7 : 1.5;
     this.clearSelection(false);
+    // 분류별 막대 한 줄은 낮은 무대가 알맞다(dashboard.css .stage.flat). 크기를 먼저 맞춘 뒤 시점을 잡는다.
+    const flatChanged = this.host.classList.contains('flat') !== (grid.mode === 'category');
+    this.host.classList.toggle('flat', grid.mode === 'category');
+    if (flatChanged) this.resize();
     this.rebuild();
-    if (!sameShape) this.fitCamera();
+    if (!sameShape || flatChanged) this.fitCamera();
     this.startAnimation();
   }
 
@@ -216,8 +220,20 @@ export class LedgerScene {
     return lane * LANE + gap;
   }
 
+  /** category 모드: 분류(줄)를 가로축으로 펼친다. 수입 분류와 지출 분류 사이에 간격을 둔다. */
+  private flatX(lane: number): number {
+    const grid = this.grid!;
+    const firstExpense = grid.lanes.findIndex((l) => l.type === 'expense');
+    const gap = firstExpense > 0 && lane >= firstExpense ? this.colW * 0.6 : 0;
+    return lane * this.colW + gap;
+  }
+
   private rebuild(): void {
     const grid = this.grid!;
+    if (grid.mode === 'category') {
+      this.rebuildFlat();
+      return;
+    }
     this.scene.remove(this.world);
     this.world.traverse((o) => {
       if ((o instanceof THREE.LineSegments || o instanceof THREE.Mesh) && o.geometry !== this.unitBox) o.geometry.dispose();
@@ -313,6 +329,92 @@ export class LedgerScene {
     this.buildTicks();
   }
 
+  /** 한 달 · 분류별: 축은 분류(가로)와 금액(높이) 둘뿐, 앞뒤 깊이는 막대 한 줄 */
+  private rebuildFlat(): void {
+    const grid = this.grid!;
+    this.scene.remove(this.world);
+    this.world.traverse((o) => {
+      if ((o instanceof THREE.LineSegments || o instanceof THREE.Mesh) && o.geometry !== this.unitBox) o.geometry.dispose();
+      if (o instanceof CSS2DObject) o.element.remove();
+    });
+    this.world = new THREE.Group();
+    this.scene.add(this.world);
+    this.bars = [];
+    this.hovered = null;
+
+    const cw = this.colW;
+    const n = grid.lanes.length;
+    const x0 = -cw / 2;
+    const x1 = (n > 0 ? this.flatX(n - 1) : 0) + cw / 2;
+    const z0 = -LANE / 2;
+    const z1 = LANE / 2;
+    this.extent = { x0, x1, z0, z1 };
+    const barW = Math.min(cw, LANE) * BAR_FILL;
+
+    const pad = 0.35;
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0 + pad * 2, z1 - z0 + pad * 2), this.floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set((x0 + x1) / 2, 0, 0);
+    floor.receiveShadow = true;
+    this.world.add(floor);
+
+    // 바닥 격자: 앞뒤 경계와, 분류마다 좌우 경계
+    const pts: number[] = [];
+    const firstExpense = grid.lanes.findIndex((l) => l.type === 'expense');
+    const groups: [number, number][] = [];
+    if (firstExpense !== 0) groups.push([0, (firstExpense === -1 ? n : firstExpense) - 1]);
+    if (firstExpense !== -1) groups.push([firstExpense, n - 1]);
+    for (const [a, b] of groups) {
+      if (b < a) continue;
+      const ga = this.flatX(a) - cw / 2;
+      const gb = this.flatX(b) + cw / 2;
+      pts.push(ga, 0.002, z0, gb, 0.002, z0, ga, 0.002, z1, gb, 0.002, z1);
+      for (let i = a; i <= b + 1; i++) {
+        const x = i <= b ? this.flatX(i) - cw / 2 : gb;
+        pts.push(x, 0.002, z0, x, 0.002, z1);
+      }
+    }
+    const gridGeo = new THREE.BufferGeometry();
+    gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    this.world.add(new THREE.LineSegments(gridGeo, this.lineMat));
+
+    for (const cell of grid.cells) {
+      const type = grid.lanes[cell.lane].type;
+      const mesh = new THREE.Mesh(this.unitBox, this.mats[type].base);
+      mesh.position.set(this.flatX(cell.lane), 0, 0);
+      mesh.scale.set(barW, MIN_H, barW);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData.index = this.bars.length;
+      this.world.add(mesh);
+      this.bars.push({ mesh, cell, type, from: MIN_H, to: this.barHeight(cell.total) });
+    }
+
+    // 분류 이름: 막대 앞쪽 바닥에
+    grid.lanes.forEach((lane, i) => {
+      const obj = label(lane.category, `col catname ${lane.type}`);
+      obj.position.set(this.flatX(i), 0, z1 + 0.55);
+      this.world.add(obj);
+    });
+
+    const span = (x1 - x0) / 2 + 2;
+    const cx = (x0 + x1) / 2;
+    const cam = this.sun.shadow.camera;
+    cam.left = -span;
+    cam.right = span;
+    cam.top = span;
+    cam.bottom = -span;
+    cam.near = 1;
+    cam.far = 120;
+    cam.updateProjectionMatrix();
+    this.sun.position.set(cx - span * 0.6, 40, span * 0.9);
+    this.sun.target.position.set(cx, 0, 0);
+
+    this.tickGroup = new THREE.Group();
+    this.world.add(this.tickGroup);
+    this.buildTicks();
+  }
+
   /** 줄들이 차지하는 Z 구간(수입 묶음, 지출 묶음). 두 묶음 사이 빈 칸에는 세로 격자를 긋지 않는다. */
   private laneRanges(): [number, number][] {
     const grid = this.grid!;
@@ -358,7 +460,8 @@ export class LedgerScene {
   private fitCamera(): void {
     const { x0, x1, z0, z1 } = this.extent;
     // 분류 이름(오른쪽)과 날짜(앞쪽), 금액 눈금(왼쪽)이 들어갈 여유
-    const xs = [x0 - 1.6, x1 + 2.6];
+    // 금액 눈금(왼쪽)과 분류 이름(오른쪽 또는 앞쪽)이 들어갈 여유. 분류별 한 줄은 오른쪽 이름이 없다.
+    const xs = this.grid?.mode === 'category' ? [x0 - 2.4, x1 + 0.6] : [x0 - 1.6, x1 + 2.6];
     const ys = [0, this.height];
     const zs = [z0, z1 + 1.1];
     const corners: THREE.Vector3[] = [];
@@ -368,7 +471,9 @@ export class LedgerScene {
     // 분류 줄이 화면 가로로 펼쳐지며, 분류 이름은 아래쪽 끝에 세로쓰기로 붙는다.
     const portrait = this.camera.aspect < PORTRAIT;
     this.host.classList.toggle('portrait', portrait);
-    const dir = (portrait ? new THREE.Vector3(1, 1.25, 0.2) : new THREE.Vector3(0.32, 0.78, 1)).normalize();
+    // 한 달 · 분류별(막대 한 줄)은 세로 화면에서도 앞에서 본다. 옆에서 보면 막대 높이가 줄과 겹쳐 읽기 어렵다.
+    const flat = this.grid?.mode === 'category';
+    const dir = (portrait && !flat ? new THREE.Vector3(1, 1.25, 0.2) : flat ? new THREE.Vector3(0.22, 0.6, 1) : new THREE.Vector3(0.32, 0.78, 1)).normalize();
     const target = new THREE.Vector3((x0 + x1) / 2, this.height * 0.3, (z0 + z1) / 2);
     const p = new THREE.Vector3();
     const bounds = (d: number): { minX: number; maxX: number; minY: number; maxY: number } => {

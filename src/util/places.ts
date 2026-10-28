@@ -100,6 +100,16 @@ export function groupByPlace(rows: readonly Tx[]): Map<Place, PlaceGroup[]> {
   return out;
 }
 
+/**
+ * 수입 대비 비율: 소수 한 자리(예: 70.0%). 잔액처럼 음수면 '−12.5%'.
+ * 수입이 없으면 비율을 낼 수 없어 null을 돌려준다(화면에는 '수입 없음').
+ */
+export function incomeRatioLabel(value: number, income: number): string | null {
+  if (income <= 0) return null;
+  const r = (value / income) * 100;
+  return `${r < 0 ? '−' : ''}${Math.abs(r).toFixed(1)}%`;
+}
+
 /** 비율 표시: 소수 한 자리(예: 77.7%). 전체가 0이면 0.0% */
 export function percentLabel(part: number, whole: number): string {
   return `${whole > 0 ? ((part / whole) * 100).toFixed(1) : '0.0'}%`;

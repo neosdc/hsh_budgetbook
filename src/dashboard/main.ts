@@ -6,20 +6,21 @@ import { describeError } from '../errors';
 import { supabase } from '../supabase';
 import { DEFAULT_CATEGORIES, type Category, type Tx } from '../types';
 import {
+  buildCategoryGrid,
   buildGrid,
   buildLanes,
   dayColumns,
   monthColumns,
-  topExpenseLane,
   windowRange,
   type Cell,
   type DashMode,
+  type GridMode,
   type Grid,
   type HeightScale,
 } from '../util/dashboard';
 import { fullDateLabel, monthLabel, shiftMonth, todayStr } from '../util/dates';
 import { esc, won } from '../util/format';
-import { groupByPlace, percentLabel, PERSONS, PLACES, resolvePlace, type Place, type PlaceGroup } from '../util/places';
+import { groupByPlace, incomeRatioLabel, percentLabel, PERSONS, PLACES, resolvePlace, type Place, type PlaceGroup } from '../util/places';
 import { slicesByCategory, slicesByPerson, type Slice } from '../util/pies';
 import type { HouseScene } from './house/scene';
 import { PieChart } from './pies';
@@ -36,10 +37,12 @@ interface Prefs {
   scale: HeightScale;
   cutaway: boolean;
   furniture: boolean;
+  /** 수입·지출·잔액 요약을 펼쳐 둘지. 다른 사람 앞에서 금액이 바로 보이지 않도록 기본은 접힘 */
+  summaryOpen: boolean;
 }
 
 function loadPrefs(): Prefs {
-  const fallback: Prefs = { view: 'house', mode: 'days', scale: 'linear', cutaway: true, furniture: true };
+  const fallback: Prefs = { view: 'house', mode: 'days', scale: 'linear', cutaway: true, furniture: true, summaryOpen: false };
   try {
     const p = JSON.parse(localStorage.getItem(PREF_KEY) ?? '{}') as Partial<Prefs>;
     return {
@@ -48,6 +51,7 @@ function loadPrefs(): Prefs {
       scale: p.scale === 'sqrt' ? 'sqrt' : 'linear',
       cutaway: p.cutaway !== false,
       furniture: p.furniture !== false,
+      summaryOpen: p.summaryOpen === true,
     };
   } catch {
     return fallback;
@@ -73,8 +77,8 @@ function cellPeriod(grid: Grid, cell: Cell): string {
 }
 
 /** 내역 하나의 날짜: 한 달 보기면 '15일', 12개월 보기면 '10.15' */
-function shortDate(mode: DashMode, date: string): string {
-  return mode === 'days' ? `${Number(date.slice(8))}일` : `${Number(date.slice(5, 7))}.${Number(date.slice(8))}`;
+function shortDate(mode: GridMode, date: string): string {
+  return mode !== 'months' ? `${Number(date.slice(8))}일` : `${Number(date.slice(5, 7))}.${Number(date.slice(8))}`;
 }
 
 /** 위치·사람 값이 어떻게 자리로 읽혔는지 보여 주는 표시 */
@@ -185,7 +189,8 @@ class Dashboard {
     const columns = mode === 'days' ? dayColumns(this.anchor) : monthColumns(this.anchor);
     const rows = mode === 'days' ? windowRows.filter((t) => t.occurred_on.startsWith(this.anchor)) : windowRows;
     const lanes = buildLanes(this.categories ?? [], rows);
-    const grid = buildGrid(mode, rows, columns, lanes);
+    // 통계로 보기의 한 달은 날짜 축 없이 분류별 합계 막대(축: 분류, 금액)로 그린다.
+    const grid = this.prefs.view === 'grid' && mode === 'days' ? buildCategoryGrid(this.anchor, rows, lanes) : buildGrid(mode, rows, columns, lanes);
     this.grid = grid;
     this.places = groupByPlace(rows);
 
@@ -209,38 +214,15 @@ class Dashboard {
     else $('stage-msg').hidden = true;
   }
 
-  /** 지출이 가장 많은 자리. 지출이 없으면 null */
-  private topPlace(): { place: Place; total: number } | null {
-    let best: { place: Place; total: number } | null = null;
-    for (const p of PLACES) {
-      const total = (this.places.get(p) ?? []).reduce((a, g) => a + g.total, 0);
-      if (total > 0 && (!best || total > best.total)) best = { place: p, total };
-    }
-    return best;
-  }
-
   private renderStats(): void {
     const grid = this.grid!;
     const balance = grid.income - grid.expense;
-    let last: string;
-    if (this.prefs.view === 'house') {
-      const top = this.topPlace();
-      last =
-        `<div class="sum-item"><div class="sum-label">가장 많이 쓴 곳</div><div class="sum-value top-cat">` +
-        (top ? `${top.place}<span class="top-amt">${won(top.total)}원 · ${percentLabel(top.total, grid.expense)}</span>` : '<span class="top-amt">없음</span>') +
-        `</div></div>`;
-    } else {
-      const top = topExpenseLane(grid);
-      last =
-        `<div class="sum-item"><div class="sum-label">가장 큰 지출 분류</div><div class="sum-value top-cat">` +
-        (top ? `${esc(top.category)}<span class="top-amt">${won(top.total)}원</span>` : '<span class="top-amt">없음</span>') +
-        `</div></div>`;
-    }
+    // 지출과 잔액에는 수입 대비 비율을 붙인다(수입 100만, 지출 70만 → 지출 70.0%, 잔액 30.0%).
+    const ratio = (v: number): string => `<span class="sum-ratio">수입 대비 ${incomeRatioLabel(v, grid.income) ?? '— (수입 없음)'}</span>`;
     $('dash-stats').innerHTML =
       `<div class="sum-item"><div class="sum-label">수입</div><div class="sum-value" style="color:var(--income)">${won(grid.income)}<span class="unit">원</span></div></div>` +
-      `<div class="sum-item"><div class="sum-label">지출</div><div class="sum-value" style="color:var(--expense)">${won(grid.expense)}<span class="unit">원</span></div></div>` +
-      `<div class="sum-item"><div class="sum-label">잔액</div><div class="sum-value${balance < 0 ? ' neg' : ''}">${signed(balance)}<span class="unit">원</span></div></div>` +
-      last;
+      `<div class="sum-item"><div class="sum-label">지출</div><div class="sum-value" style="color:var(--expense)">${won(grid.expense)}<span class="unit">원</span></div>${ratio(grid.expense)}</div>` +
+      `<div class="sum-item"><div class="sum-label">잔액</div><div class="sum-value${balance < 0 ? ' neg' : ''}">${signed(balance)}<span class="unit">원</span></div>${ratio(balance)}</div>`;
   }
 
   private renderTable(): void {
@@ -262,7 +244,7 @@ class Dashboard {
       return;
     }
     head.innerHTML =
-      `<tr><th scope="col">${grid.mode === 'days' ? '날짜' : '달'}</th><th scope="col">구분</th><th scope="col">분류</th>` +
+      `<tr><th scope="col">${grid.mode === 'days' ? '날짜' : grid.mode === 'category' ? '기간' : '달'}</th><th scope="col">구분</th><th scope="col">분류</th>` +
       `<th scope="col">건수</th><th scope="col">금액</th></tr>`;
     if (grid.cells.length === 0) {
       body.innerHTML = '<tr><td colspan="5" class="none">내역이 없습니다.</td></tr>';
@@ -452,6 +434,9 @@ class Dashboard {
     press('[data-scale]', (b) => b.dataset.scale === p.scale);
     press('[data-wall]', (b) => (b.dataset.wall === 'cut') === p.cutaway);
     $('furn-btn').setAttribute('aria-pressed', String(p.furniture));
+    $('sum-toggle').setAttribute('aria-expanded', String(p.summaryOpen));
+    $('sum-toggle-state').textContent = p.summaryOpen ? '접기' : '숨김 · 눌러서 보기';
+    $('dash-stats').hidden = !p.summaryOpen;
     $('period-label').textContent = p.mode === 'days' ? monthLabel(this.anchor) : `${monthLabel(shiftMonth(this.anchor, -11))} – ${monthLabel(this.anchor)}`;
     $('scale-note').hidden = p.scale !== 'sqrt';
     const house = p.view === 'house';
@@ -479,12 +464,8 @@ class Dashboard {
         this.tip.hidden = true;
         $('stage-msg').hidden = true;
         update({ view });
-        if (this.grid) {
-          this.renderStats();
-          this.renderTable();
-          this.updateStageMessage();
-        }
-        void this.ensureScene();
+        // 보기마다 그리드 모양이 다르므로(통계로 보기의 한 달은 분류별) 캐시된 내역으로 다시 그린다.
+        void this.ensureScene().then(() => this.load());
       });
     }
     for (const b of document.querySelectorAll<HTMLButtonElement>('[data-mode]')) {
@@ -512,6 +493,8 @@ class Dashboard {
         this.house?.setCutaway(cutaway);
       });
     }
+    // 접힘 여부는 다른 보기 설정과 함께 이 기기(브라우저)에 저장된다.
+    $('sum-toggle').addEventListener('click', () => update({ summaryOpen: !this.prefs.summaryOpen }));
     $('furn-btn').addEventListener('click', () => {
       update({ furniture: !this.prefs.furniture });
       this.house?.setFurniture(this.prefs.furniture);

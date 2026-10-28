@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Category, Tx } from '../types';
 import {
+  buildCategoryGrid,
+  fineMax,
   buildGrid,
   buildLanes,
   dayColumns,
@@ -143,5 +145,37 @@ describe('windowRange', () => {
   it('기준 달로 끝나는 12개월의 [시작, 끝)', () => {
     expect(windowRange('2026-10')).toEqual(['2025-11-01', '2026-11-01']);
     expect(windowRange('2026-12')).toEqual(['2026-01-01', '2027-01-01']);
+  });
+});
+
+describe('buildCategoryGrid', () => {
+  it('한 달을 분류별 합계로, 내역이 있는 분류만 수입 다음 지출 순서로', () => {
+    const cats2: Category[] = [
+      { id: '1', type: 'expense', name: '교통', sort_order: 1 },
+      { id: '2', type: 'expense', name: '식비', sort_order: 0 },
+      { id: '3', type: 'income', name: '급여', sort_order: 0 },
+    ];
+    const rows = [
+      tx('expense', 3000, '2026-10-02', '식비'),
+      tx('expense', 7000, '2026-10-20', '식비'),
+      tx('income', 4_000_000, '2026-10-10', '급여'),
+      tx('expense', 999, '2026-09-30', '교통'), // 다른 달
+    ];
+    const g = buildCategoryGrid('2026-10', rows, buildLanes(cats2, rows));
+    expect(g.mode).toBe('category');
+    expect(g.columns).toHaveLength(1);
+    expect(g.lanes.map((l) => l.category)).toEqual(['급여', '식비']);
+    expect(g.cells.map((c) => [c.col, c.lane, c.total, c.rows.length])).toEqual([
+      [0, 0, 4_000_000, 1],
+      [0, 1, 10000, 2],
+    ]);
+    expect(g.expense).toBe(10000);
+    expect(g.max).toBe(4_000_000);
+  });
+
+  it('fineMax는 촘촘한 단계로 올린다', () => {
+    expect(fineMax(10_789_380)).toBe(12_000_000);
+    expect(fineMax(2_050_503)).toBe(2_500_000);
+    expect(fineMax(0)).toBe(1);
   });
 });

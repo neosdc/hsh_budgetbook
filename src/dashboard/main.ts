@@ -27,7 +27,7 @@ import type { LedgerScene } from './scene';
 
 const PREF_KEY = 'hsh-dash-prefs';
 
-/** 3D 보기: 날짜×분류 막대 그래프(grid) 또는 집 모형 위 자리별 막대(house) */
+/** 보기: 집 모형 위 자리별 막대(house) 또는 통계로 보기(grid: 인원별·분류별 원형 그래프와 날짜×분류 3D 막대 그래프) */
 type View = 'grid' | 'house';
 
 interface Prefs {
@@ -456,6 +456,7 @@ class Dashboard {
     $('scale-note').hidden = p.scale !== 'sqrt';
     const house = p.view === 'house';
     $('stage').hidden = house;
+    $('pies').hidden = house; // 원형 그래프는 통계로 보기에서만
     $('house-stage').hidden = !house;
     $('house-tools').hidden = !house;
     $('lg-income').hidden = house;

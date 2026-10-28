@@ -36,7 +36,7 @@
       <div class="dash-controls">
         <div class="tabs view-tabs" role="group" aria-label="3D 보기">
           <button type="button" class="tab" data-view="house" aria-pressed="true">우리 집</button>
-          <button type="button" class="tab" data-view="grid" aria-pressed="false">막대 그래프</button>
+          <button type="button" class="tab" data-view="grid" aria-pressed="false">통계로 보기</button>
         </div>
         <div class="tabs" role="group" aria-label="기간">
           <button type="button" class="tab" data-mode="days" aria-pressed="true">한 달</button>
@@ -58,6 +58,23 @@
       </div>
 
       <section id="dash-stats" class="summary stats4" aria-label="기간 요약"></section>
+
+      <section id="pies" class="pies" aria-label="지출 구성" hidden>
+        <div class="pie-card">
+          <div class="pie-head">
+            <h2>인원별 지출</h2>
+            <p class="pie-note">위치·사람에 사람을 고른 지출. 위치를 고르거나 비워 둔 지출은 가족 공동입니다.</p>
+          </div>
+          <div id="pie-person" class="pie"></div>
+        </div>
+        <div class="pie-card">
+          <div class="pie-head">
+            <h2>분류별 지출</h2>
+            <p class="pie-note">금액이 큰 다섯 분류, 나머지는 한 조각으로 묶었습니다.</p>
+          </div>
+          <div id="pie-category" class="pie"></div>
+        </div>
+      </section>
 
       <section id="stage-card" class="stage-card" aria-label="우리 집 3D 모형 위 자리별 지출 막대">
         <div class="stage-head">

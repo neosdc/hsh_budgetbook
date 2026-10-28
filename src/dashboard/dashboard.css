@@ -184,3 +184,12 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 .sum-toggle[aria-expanded='true'] .sum-chev { transform: rotate(90deg); }
 .sum-toggle-state { font-weight: 400; font-size: 13px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .sum-chev { transition: none; } }
+
+/* 통계로 보기 · 한 달: 막대 앞 분류 이름. 좁은 화면에서는 세로쓰기로 겹치지 않게 한다. */
+.lbl.col.catname { color: var(--fg); font-size: 12px; }
+@media (max-width: 720px) {
+  .lbl.col.catname { width: 0; height: 0; }
+  .lbl.col.catname span { position: absolute; top: 0; left: 0; transform: translateX(-50%); writing-mode: vertical-rl; font-size: 11px; }
+}
+.stage.flat { height: min(56vh, 520px); }
+@media (max-width: 720px) { .stage.flat { height: 400px; min-height: 0; } }

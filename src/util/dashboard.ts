@@ -5,6 +5,12 @@ import { lastMonths, niceMax } from './trend';
 /** 3D 대시보드의 보기 방식: 한 달을 일별로, 또는 최근 12개월을 월별로 */
 export type DashMode = 'days' | 'months';
 
+/**
+ * 그리드 모양. days: 날짜 × 분류, months: 달 × 분류,
+ * category: 한 달 합계를 분류 하나당 막대 하나로(축은 분류와 금액 둘뿐, 열은 그 달 하나).
+ */
+export type GridMode = DashMode | 'category';
+
 /** 높이 축척. linear는 금액에 비례, sqrt는 작은 금액이 덜 묻히도록 제곱근에 비례한다. */
 export type HeightScale = 'linear' | 'sqrt';
 
@@ -33,7 +39,7 @@ export interface Cell {
 }
 
 export interface Grid {
-  mode: DashMode;
+  mode: GridMode;
   columns: Column[];
   lanes: Lane[];
   cells: Cell[];
@@ -91,7 +97,7 @@ export function buildLanes(categories: readonly Category[], rows: readonly Tx[])
 }
 
 /** 내역을 열(날짜 또는 달) × 줄(구분+분류) 칸으로 합산한다. 열 밖의 내역은 무시한다. */
-export function buildGrid(mode: DashMode, rows: readonly Tx[], columns: readonly Column[], lanes: readonly Lane[]): Grid {
+export function buildGrid(mode: GridMode, rows: readonly Tx[], columns: readonly Column[], lanes: readonly Lane[]): Grid {
   const keyLen = mode === 'days' ? 10 : 7;
   const colIndex = new Map(columns.map((c, i) => [c.key, i]));
   const laneIndex = new Map(lanes.map((l, i) => [`${l.type}\u0000${l.category}`, i]));
@@ -119,6 +125,32 @@ export function buildGrid(mode: DashMode, rows: readonly Tx[], columns: readonly
   const list = [...cells.values()].sort((a, b) => a.col - b.col || a.lane - b.lane);
   const top = list.reduce((m, c) => Math.max(m, c.total), 0);
   return { mode, columns: [...columns], lanes: [...lanes], cells: list, max: niceMax(top), income, expense };
+}
+
+/**
+ * 한 달을 분류별 합계 막대로: 열은 그 달 하나, 줄은 내역이 있는 분류만(수입 분류 다음 지출 분류, buildLanes 순서).
+ * 3D 장면은 category 모드에서 줄을 가로축으로 펼쳐 그린다.
+ */
+export function buildCategoryGrid(month: string, rows: readonly Tx[], lanes: readonly Lane[]): Grid {
+  const [y, m] = month.split('-').map(Number);
+  const g = buildGrid('category', rows, [{ key: month, label: `${y}년 ${m}월`, showLabel: false }], lanes);
+  const used = [...new Set(g.cells.map((c) => c.lane))].sort((a, b) => a - b);
+  const remap = new Map(used.map((old, i) => [old, i]));
+  const top = g.cells.reduce((mx, c) => Math.max(mx, c.total), 0);
+  return { ...g, max: fineMax(top), lanes: used.map((i) => g.lanes[i]), cells: g.cells.map((c) => ({ ...c, lane: remap.get(c.lane)! })) };
+}
+
+/**
+ * niceMax보다 촘촘한 축 최댓값: 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10 × 10^k.
+ * 분류별 막대는 막대 수가 적어 가장 큰 막대가 축 끝까지 닿는 편이 읽기 좋다(1,079만 → 1,200만, niceMax는 2,000만).
+ */
+export function fineMax(max: number): number {
+  if (max <= 0) return 1;
+  const pow = 10 ** Math.floor(Math.log10(max));
+  for (const f of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) {
+    if (f * pow >= max) return f * pow;
+  }
+  return 10 * pow;
 }
 
 /** 금액을 0~1 높이 비율로 바꾼다. */

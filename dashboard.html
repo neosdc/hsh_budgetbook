@@ -57,7 +57,14 @@
         </div>
       </div>
 
-      <section id="dash-stats" class="summary stats4" aria-label="기간 요약"></section>
+      <div class="sum-fold">
+        <button type="button" id="sum-toggle" class="sum-toggle" aria-expanded="false" aria-controls="dash-stats">
+          <svg class="sum-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4.5 13 10l-5.5 5.5" /></svg>
+          <span>수입 · 지출 · 잔액</span>
+          <span id="sum-toggle-state" class="sum-toggle-state">숨김</span>
+        </button>
+        <section id="dash-stats" class="summary stats4" aria-label="기간 요약" hidden></section>
+      </div>
 
       <section id="pies" class="pies" aria-label="지출 구성" hidden>
         <div class="pie-card">

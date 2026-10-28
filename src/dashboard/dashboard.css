@@ -16,6 +16,7 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 
 .top-cat { font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .top-amt { display: block; font-size: 13px; font-weight: 400; color: var(--muted); }
+.sum-ratio { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .stage-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin: 16px 0; overflow: hidden; }
 .stage-head { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--line); }
@@ -162,3 +163,24 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 @media (max-width: 420px) { .pie-item { grid-template-columns: 10px minmax(0, 1fr) auto; } .pie-amt { display: none; } }
 .pie-empty { margin: 0; padding: 28px 0; text-align: center; color: var(--muted); font-size: 14px; grid-column: 1 / -1; }
 @media (prefers-reduced-motion: reduce) { .pie-slice, .pie-item { transition: none; } }
+
+/* 통계로 보기의 요약은 수입·지출·잔액 세 칸 */
+.summary.stats3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 720px) {
+  .summary.stats3 { grid-template-columns: 1fr 1fr; }
+  .summary.stats3 .sum-item:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* 수입·지출·잔액 요약 접기(기본 접힘, 상태는 기기에 저장) */
+.sum-fold { display: grid; gap: 8px; margin: 16px 0; }
+.sum-fold .summary { margin: 0; }
+.sum-toggle {
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+  font-size: 14px; font-weight: 600; color: var(--fg); cursor: pointer;
+}
+.sum-toggle:hover { background: var(--surface-2); }
+.sum-chev { width: 16px; height: 16px; transition: transform 0.15s; }
+.sum-toggle[aria-expanded='true'] .sum-chev { transform: rotate(90deg); }
+.sum-toggle-state { font-weight: 400; font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .sum-chev { transition: none; } }

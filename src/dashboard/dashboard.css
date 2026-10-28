@@ -121,3 +121,44 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 .pick-list li.pick-group .pick-cat { flex: 1; }
 .chip { display: inline-block; margin-left: 4px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 999px; font-size: 11px; color: var(--muted); white-space: nowrap; vertical-align: 1px; }
 .chip.warn { border-color: var(--warn); color: var(--warn); white-space: normal; }
+
+/* 원형(도넛) 그래프: 인원별·분류별 지출
+   색 순서는 데이터 시각화 기본 팔레트의 앞 다섯 칸(파랑, 주황, 청록, 노랑, 분홍)으로,
+   이웃한 조각끼리 색약에서도 구분되는지 검사한 순서다. 남는 것은 회색. */
+:root {
+  --pie-1: #2a78d6; --pie-2: #eb6834; --pie-3: #1baf7a; --pie-4: #eda100; --pie-5: #e87ba4; --pie-rest: #a7b1ac;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --pie-1: #3987e5; --pie-2: #d95926; --pie-3: #199e70; --pie-4: #c98500; --pie-5: #d55181; --pie-rest: #5d6b65; }
+}
+.pies { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 16px 0; }
+@media (max-width: 820px) { .pies { grid-template-columns: minmax(0, 1fr); } }
+.pie-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 16px; min-width: 0; display: grid; gap: 10px; align-content: start; }
+.pie-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.pie-note { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.pie { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; align-items: center; }
+@media (max-width: 420px) { .pie { grid-template-columns: 140px minmax(0, 1fr); gap: 12px; } }
+.pie-figure { position: relative; width: 100%; aspect-ratio: 1; max-width: 100%; }
+.pie-figure svg { display: block; width: 100%; height: 100%; }
+.pie-slice { cursor: pointer; transition: opacity 0.15s; }
+.pie-slice.dim { opacity: 0.3; }
+.pie-center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 2px; pointer-events: none; text-align: center; padding: 0 22%; }
+.pie-c-label { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.pie-c-amt { font-size: 15px; font-weight: 600; white-space: nowrap; }
+.pie-c-pct { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 420px) { .pie-c-amt { font-size: 13px; } }
+.pie-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; min-width: 0; }
+.pie-item {
+  width: 100%; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 3.6em; gap: 8px; align-items: center;
+  padding: 6px 6px; border: 0; border-radius: 6px; background: transparent; text-align: left; cursor: pointer; font-size: 14px;
+  transition: opacity 0.15s;
+}
+.pie-item:hover, .pie-item[aria-pressed='true'] { background: var(--surface-2); }
+.pie-item.dim { opacity: 0.45; }
+.pie-sw { width: 10px; height: 10px; border-radius: 3px; }
+.pie-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pie-amt { font-variant-numeric: tabular-nums; }
+.pie-pct { color: var(--muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 420px) { .pie-item { grid-template-columns: 10px minmax(0, 1fr) auto; } .pie-amt { display: none; } }
+.pie-empty { margin: 0; padding: 28px 0; text-align: center; color: var(--muted); font-size: 14px; grid-column: 1 / -1; }
+@media (prefers-reduced-motion: reduce) { .pie-slice, .pie-item { transition: none; } }

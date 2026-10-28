@@ -19,8 +19,10 @@ import {
 } from '../util/dashboard';
 import { fullDateLabel, monthLabel, shiftMonth, todayStr } from '../util/dates';
 import { esc, won } from '../util/format';
-import { groupByPlace, percentLabel, PLACES, resolvePlace, type Place, type PlaceGroup } from '../util/places';
+import { groupByPlace, percentLabel, PERSONS, PLACES, resolvePlace, type Place, type PlaceGroup } from '../util/places';
+import { slicesByCategory, slicesByPerson, type Slice } from '../util/pies';
 import type { HouseScene } from './house/scene';
+import { PieChart } from './pies';
 import type { LedgerScene } from './scene';
 
 const PREF_KEY = 'hsh-dash-prefs';
@@ -97,6 +99,16 @@ class Dashboard {
   private gridFailed = false;
   private request = 0;
   private readonly tip = $('stage-tip');
+  // 사람은 달이 바뀌어도 같은 색이 되도록 사람 목록 순서로 색을 정한다.
+  private readonly personPie = new PieChart($('pie-person'), '인원별 지출 원형 그래프', {
+    color: (s) => PERSONS.indexOf(s.key) + 1,
+    onPick: (s) => this.showSlicePick('person', s),
+  });
+  // 분류는 그 기간의 금액 순위대로 1~5번 색을 쓴다(범례에 이름·금액이 함께 있어 색만으로 읽지 않는다).
+  private readonly categoryPie = new PieChart($('pie-category'), '분류별 지출 원형 그래프', {
+    color: (_s, i) => i + 1,
+    onPick: (s) => this.showSlicePick('category', s),
+  });
 
   async start(): Promise<void> {
     this.bind();
@@ -180,6 +192,8 @@ class Dashboard {
     this.renderStats();
     this.renderTable();
     this.closePick();
+    this.personPie.render(slicesByPerson(rows), grid.expense);
+    this.categoryPie.render(slicesByCategory(rows), grid.expense);
     this.scene?.setGrid(grid, this.prefs.scale);
     this.house?.setData(this.places, grid.expense, this.prefs.scale);
     this.updateStageMessage();
@@ -332,7 +346,9 @@ class Dashboard {
           `<span class="amt ${t.type}">${won(t.amount)}원</span></li>`,
       )
       .join('');
-    $('pick').hidden = false;
+    this.personPie.clearPick();
+    this.categoryPie.clearPick();
+    this.openPick('stage');
   }
 
   /** 자리를 누르면 그 자리의 분류별 내역을 보여 준다. 막대로 고른 분류가 있으면 그 분류만. */
@@ -366,12 +382,55 @@ class Dashboard {
           )
           .join('')
       : '<li><span class="pick-memo muted">이곳으로 정해진 지출이 없습니다. 내역의 "위치·사람"에서 고르면 이 자리에 놓입니다.</span></li>';
-    $('pick').hidden = false;
+    this.personPie.clearPick();
+    this.categoryPie.clearPick();
+    this.openPick('stage');
+  }
+
+  /**
+   * 내역 목록을 연다. 목록 상자는 하나를 함께 쓰고, 누른 그래프 바로 아래로 옮겨서
+   * 원형 그래프를 누르면 원형 그래프 아래에, 3D 화면을 누르면 3D 화면 아래에 보인다.
+   */
+  private openPick(after: 'pies' | 'stage'): void {
+    const pick = $('pick');
+    $(after === 'pies' ? 'pies' : 'stage-card').after(pick);
+    pick.hidden = false;
+  }
+
+  /** 원형 그래프 조각을 누르면 그 조각의 내역을 보여 준다. */
+  private showSlicePick(kind: 'person' | 'category', slice: Slice | null): void {
+    const grid = this.grid;
+    (kind === 'person' ? this.categoryPie : this.personPie).clearPick();
+    this.scene?.clearSelection(false);
+    this.house?.select(null);
+    if (!slice || !grid) {
+      $('pick').hidden = true;
+      return;
+    }
+    this.tip.hidden = true;
+    const what = kind === 'person' ? '인원' : '분류';
+    const sub = slice.members ? ` <span class="pick-pct">${slice.members.map(esc).join(', ')}</span>` : '';
+    $('pick-title').innerHTML =
+      `<span class="lg expense"></span>${what} · ${esc(slice.key)}` +
+      `<span class="pick-total expense">${won(slice.total)}원</span>` +
+      `<span class="pick-pct">${percentLabel(slice.total, grid.expense)} · ${slice.rows.length}건</span>${sub}`;
+    $('pick-list').innerHTML = slice.rows
+      .map(
+        (t) =>
+          `<li><span class="pick-date">${shortDate(grid.mode, t.occurred_on)}</span>` +
+          `<span class="pick-memo">${t.memo ? esc(t.memo) : '<span class="muted">메모 없음</span>'} ` +
+          `<span class="chip">${esc(kind === 'person' ? t.category : t.place.trim() || '미지정')}</span></span>` +
+          `<span class="amt expense">${won(t.amount)}원</span></li>`,
+      )
+      .join('');
+    this.openPick('pies');
   }
 
   private closePick(): void {
     this.scene?.clearSelection(false);
     this.house?.select(null);
+    this.personPie.clearPick();
+    this.categoryPie.clearPick();
     $('pick').hidden = true;
   }
 

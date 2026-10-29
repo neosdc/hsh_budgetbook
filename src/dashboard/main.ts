@@ -23,6 +23,7 @@ import { esc, won } from '../util/format';
 import { groupByPlace, incomeRatioLabel, percentLabel, PERSONS, PLACES, resolvePlace, type Place, type PlaceGroup } from '../util/places';
 import { slicesByCategory, slicesByPerson, type Slice } from '../util/pies';
 import type { HouseScene } from './house/scene';
+import { loadSummaryOpen, saveSummaryOpen } from '../summaryFold';
 import { PieChart } from './pies';
 import { TrendView } from './trend';
 import type { LedgerScene } from './scene';
@@ -38,12 +39,10 @@ interface Prefs {
   scale: HeightScale;
   cutaway: boolean;
   furniture: boolean;
-  /** 수입·지출·잔액 요약을 펼쳐 둘지. 다른 사람 앞에서 금액이 바로 보이지 않도록 기본은 접힘 */
-  summaryOpen: boolean;
 }
 
 function loadPrefs(): Prefs {
-  const fallback: Prefs = { view: 'house', mode: 'days', scale: 'linear', cutaway: true, furniture: true, summaryOpen: false };
+  const fallback: Prefs = { view: 'house', mode: 'days', scale: 'linear', cutaway: true, furniture: true };
   try {
     const p = JSON.parse(localStorage.getItem(PREF_KEY) ?? '{}') as Partial<Prefs>;
     return {
@@ -52,7 +51,6 @@ function loadPrefs(): Prefs {
       scale: p.scale === 'sqrt' ? 'sqrt' : 'linear',
       cutaway: p.cutaway !== false,
       furniture: p.furniture !== false,
-      summaryOpen: p.summaryOpen === true,
     };
   } catch {
     return fallback;
@@ -446,9 +444,11 @@ class Dashboard {
     press('[data-scale]', (b) => b.dataset.scale === p.scale);
     press('[data-wall]', (b) => (b.dataset.wall === 'cut') === p.cutaway);
     $('furn-btn').setAttribute('aria-pressed', String(p.furniture));
-    $('sum-toggle').setAttribute('aria-expanded', String(p.summaryOpen));
-    $('sum-toggle-state').textContent = p.summaryOpen ? '접기' : '숨김 · 눌러서 보기';
-    $('dash-stats').hidden = !p.summaryOpen;
+    // 요약 펼침 여부는 가계부와 함께 쓰는 값(src/summaryFold.ts)
+    const open = loadSummaryOpen();
+    $('sum-toggle').setAttribute('aria-expanded', String(open));
+    $('sum-toggle-state').textContent = open ? '접기' : '숨김 · 눌러서 보기';
+    $('dash-stats').hidden = !open;
     $('period-label').textContent = p.mode === 'days' ? monthLabel(this.anchor) : `${monthLabel(shiftMonth(this.anchor, -11))} – ${monthLabel(this.anchor)}`;
     $('scale-note').hidden = p.scale !== 'sqrt';
     const house = p.view === 'house';
@@ -507,7 +507,10 @@ class Dashboard {
       });
     }
     // 접힘 여부는 다른 보기 설정과 함께 이 기기(브라우저)에 저장된다.
-    $('sum-toggle').addEventListener('click', () => update({ summaryOpen: !this.prefs.summaryOpen }));
+    $('sum-toggle').addEventListener('click', () => {
+      saveSummaryOpen(!loadSummaryOpen());
+      this.syncControls();
+    });
     $('furn-btn').addEventListener('click', () => {
       update({ furniture: !this.prefs.furniture });
       this.house?.setFurniture(this.prefs.furniture);

@@ -1,4 +1,5 @@
 import { SEARCH_LIMIT, fetchAll, fetchMonth, removeTx, saveTx, searchTx } from './api';
+import { loadSummaryOpen, saveSummaryOpen } from './summaryFold';
 import { $, downloadText, formatAmountField, toast } from './dom';
 import { describeError } from './errors';
 import { BudgetManager } from './budgets';
@@ -29,25 +30,6 @@ interface State {
 }
 
 /** 로그인 후 보이는 가계부 화면 전체(요약, 목록, 분류, 입력 대화상자)를 담당한다. */
-const SUMMARY_KEY = 'hsh-ledger-summary-open';
-
-/** 잔액·수입·지출 요약을 펼쳐 둘지(이 기기에 저장). 다른 사람 앞에서 금액이 바로 보이지 않도록 기본은 접힘 */
-function loadSummaryOpen(): boolean {
-  try {
-    return localStorage.getItem(SUMMARY_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function saveSummaryOpen(open: boolean): void {
-  try {
-    localStorage.setItem(SUMMARY_KEY, open ? '1' : '0');
-  } catch {
-    // 저장소를 쓸 수 없는 환경이면 기억하지 않는다.
-  }
-}
-
 function applySummaryOpen(open: boolean): void {
   $('sum-toggle').setAttribute('aria-expanded', String(open));
   $('sum-toggle-state').textContent = open ? '접기' : '숨김 · 눌러서 보기';

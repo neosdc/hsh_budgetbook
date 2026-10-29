@@ -44,12 +44,6 @@
       </div>
 
       <div id="month-view">
-      <form id="search-form" class="search" role="search">
-        <input type="search" id="search-input" maxlength="40" autocomplete="off" placeholder="메모, 분류, 금액 검색 (전체 기간)" aria-label="내역 검색" />
-        <button type="button" id="search-clear" class="icon-btn" hidden aria-label="검색 지우기">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" /></svg>
-        </button>
-      </form>
 
       <nav id="month-nav" class="month" aria-label="월 선택">
         <button id="prev-btn" class="icon-btn" type="button" aria-label="이전 달">
@@ -78,6 +72,13 @@
         </div>
         <div id="budget-body"></div>
       </section>
+
+      <form id="search-form" class="search" role="search">
+        <input type="search" id="search-input" maxlength="40" autocomplete="off" placeholder="메모, 분류, 금액 검색 (전체 기간)" aria-label="내역 검색" />
+        <button type="button" id="search-clear" class="icon-btn" hidden aria-label="검색 지우기">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" /></svg>
+        </button>
+      </form>
 
       <div class="cols">
         <section aria-labelledby="list-title">

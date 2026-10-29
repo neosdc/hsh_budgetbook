@@ -24,6 +24,7 @@ import { groupByPlace, incomeRatioLabel, percentLabel, PERSONS, PLACES, resolveP
 import { slicesByCategory, slicesByPerson, type Slice } from '../util/pies';
 import type { HouseScene } from './house/scene';
 import { PieChart } from './pies';
+import { TrendView } from './trend';
 import type { LedgerScene } from './scene';
 
 const PREF_KEY = 'hsh-dash-prefs';
@@ -103,6 +104,8 @@ class Dashboard {
   private gridFailed = false;
   private request = 0;
   private readonly tip = $('stage-tip');
+  /** 월별 흐름(2D, 예전 가계부 "추이"). 통계로 보기에서 기준 달로 끝나는 12개월을 보여 준다. */
+  private readonly trend = new TrendView();
   // 사람은 달이 바뀌어도 같은 색이 되도록 사람 목록 순서로 색을 정한다.
   private readonly personPie = new PieChart($('pie-person'), '인원별 지출 원형 그래프', {
     color: (s) => PERSONS.indexOf(s.key) + 1,
@@ -197,6 +200,7 @@ class Dashboard {
     this.renderStats();
     this.renderTable();
     this.closePick();
+    this.trend.render(windowRows, TrendView.months(this.anchor));
     this.personPie.render(slicesByPerson(rows), grid.expense);
     this.categoryPie.render(slicesByCategory(rows), grid.expense);
     this.scene?.setGrid(grid, this.prefs.scale);
@@ -442,6 +446,7 @@ class Dashboard {
     const house = p.view === 'house';
     $('stage').hidden = house;
     $('pies').hidden = house; // 원형 그래프는 통계로 보기에서만
+    $('trend').hidden = house; // 월별 흐름도 통계로 보기에서만
     $('house-stage').hidden = !house;
     $('house-tools').hidden = !house;
     $('lg-income').hidden = house;

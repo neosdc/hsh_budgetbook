@@ -37,17 +37,13 @@
       </header>
 
       <div class="viewbar">
-        <div class="tabs" role="tablist" aria-label="화면 선택">
-          <button type="button" role="tab" id="tab-month" class="tab" aria-selected="true" aria-controls="month-view">월별 내역</button>
-          <button type="button" role="tab" id="tab-trend" class="tab" aria-selected="false" aria-controls="trend-view">추이</button>
-        </div>
         <div class="viewbar-actions">
           <a class="btn ghost small" href="dashboard.html">대시보드</a>
           <button type="button" id="rec-btn" class="btn ghost small">반복 내역</button>
         </div>
       </div>
 
-      <div id="month-view" role="tabpanel" aria-labelledby="tab-month">
+      <div id="month-view">
       <form id="search-form" class="search" role="search">
         <input type="search" id="search-input" maxlength="40" autocomplete="off" placeholder="메모, 분류, 금액 검색 (전체 기간)" aria-label="내역 검색" />
         <button type="button" id="search-clear" class="icon-btn" hidden aria-label="검색 지우기">
@@ -103,35 +99,6 @@
       </div>
       </div>
 
-      <div id="trend-view" role="tabpanel" aria-labelledby="tab-trend" hidden>
-        <p id="trend-msg" class="empty" hidden></p>
-        <div id="trend-body">
-          <div class="trend-head">
-            <h2>최근 12개월</h2>
-            <div class="legend" aria-hidden="true"><span class="lg income">수입</span><span class="lg expense">지출</span></div>
-          </div>
-          <section id="trend-stats" class="summary stats4" aria-label="12개월 요약"></section>
-          <div class="chart-card">
-            <div class="chart-scroll">
-              <div id="trend-chart" class="chart"></div>
-              <div id="trend-tip" class="tip" hidden></div>
-            </div>
-          </div>
-          <div class="cols">
-            <section aria-labelledby="trend-table-title">
-              <h2 id="trend-table-title" class="sub-title">월별 합계 <span class="count">월을 누르면 그 달 내역으로 이동</span></h2>
-              <table class="trend-table">
-                <thead><tr><th scope="col">월</th><th scope="col">수입</th><th scope="col">지출</th><th scope="col">잔액</th></tr></thead>
-                <tbody id="trend-rows"></tbody>
-              </table>
-            </section>
-            <aside class="side" aria-labelledby="trend-cat-title">
-              <h2 id="trend-cat-title">지출 분류 상위 5</h2>
-              <div id="trend-cats"></div>
-            </aside>
-          </div>
-        </div>
-      </div>
     </div>
 
     <dialog id="dlg" aria-labelledby="dlg-title">

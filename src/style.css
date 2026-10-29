@@ -244,7 +244,23 @@ input[type='text'], input[type='date'], select {
 @media (max-width: 420px) { .cat-row { flex-wrap: wrap; } .cat-btns { width: 100%; justify-content: flex-end; } }
 
 /* 월 예산 */
-.budget { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px 16px; margin-top: 16px; }
+.budget { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px 16px; }
+/* 월 예산과 내역 추가 버튼을 한 줄에. 검색 중에는 월 예산이 숨겨지고 버튼만 오른쪽에 남는다. */
+.budget-row { display: flex; gap: 12px; align-items: stretch; margin-top: 16px; }
+.budget-row .budget { flex: 1; min-width: 0; }
+.add-btn {
+  flex: none; margin-left: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-width: 120px; padding: 12px 16px; font-size: 15px; border-radius: 10px;
+}
+.add-btn svg { width: 22px; height: 22px; }
+@media (max-width: 560px) {
+  .budget-row { gap: 8px; }
+  .add-btn { min-width: 64px; padding: 10px 6px; font-size: 12px; gap: 4px; }
+  .budget-row .budget { padding: 12px 14px 14px; }
+  .budget-row .bud-items { grid-template-columns: minmax(0, 1fr); }
+  .budget-row .bud-top { flex-wrap: wrap; column-gap: 8px; row-gap: 2px; }
+  .budget-row .bud-top > :first-child { white-space: nowrap; }
+}
 .budget h2 { font-size: 15px; font-weight: 600; margin: 0; }
 .budget .hint { font-size: 13px; color: var(--muted); margin: 0; }
 .bud-alert { margin: 4px 0 8px; font-size: 13px; font-weight: 600; }

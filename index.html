@@ -32,7 +32,6 @@
         <div class="top-actions">
           <span id="who" class="who"></span>
           <button id="logout-btn" class="btn ghost" type="button">로그아웃</button>
-          <button id="add-btn" class="btn primary" type="button">내역 추가</button>
         </div>
       </header>
 
@@ -65,13 +64,19 @@
         <section id="summary" class="summary" aria-label="월 요약" hidden></section>
       </div>
 
-      <section id="budget" class="budget" aria-labelledby="budget-title">
-        <div class="side-head">
-          <h2 id="budget-title">월 예산</h2>
-          <button type="button" id="budget-btn" class="btn ghost small">예산 설정</button>
-        </div>
-        <div id="budget-body"></div>
-      </section>
+      <div class="budget-row">
+        <section id="budget" class="budget" aria-labelledby="budget-title">
+          <div class="side-head">
+            <h2 id="budget-title">월 예산</h2>
+            <button type="button" id="budget-btn" class="btn ghost small">예산 설정</button>
+          </div>
+          <div id="budget-body"></div>
+        </section>
+        <button id="add-btn" class="btn primary add-btn" type="button">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+          <span>내역 추가</span>
+        </button>
+      </div>
 
       <form id="search-form" class="search" role="search">
         <input type="search" id="search-input" maxlength="40" autocomplete="off" placeholder="메모, 분류, 금액 검색 (전체 기간)" aria-label="내역 검색" />

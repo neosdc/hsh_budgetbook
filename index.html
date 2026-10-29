@@ -62,7 +62,14 @@
         <button id="today-btn" class="btn ghost" type="button" hidden>이번 달</button>
       </nav>
 
-      <section id="summary" class="summary" aria-label="월 요약"></section>
+      <div class="sum-fold">
+        <button type="button" id="sum-toggle" class="sum-toggle" aria-expanded="false" aria-controls="summary">
+          <svg class="sum-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4.5 13 10l-5.5 5.5" /></svg>
+          <span>잔액 · 수입 · 지출</span>
+          <span id="sum-toggle-state" class="sum-toggle-state">숨김 · 눌러서 보기</span>
+        </button>
+        <section id="summary" class="summary" aria-label="월 요약" hidden></section>
+      </div>
 
       <section id="budget" class="budget" aria-labelledby="budget-title">
         <div class="side-head">

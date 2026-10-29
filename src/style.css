@@ -343,3 +343,17 @@ a.btn { display: inline-block; text-decoration: none; }
 #rec-type-income:checked + label { background: var(--income-bg); color: var(--income); }
 #rec-dlg { width: min(520px, calc(100vw - 32px)); }
 @media (max-width: 420px) { .rec-row { flex-wrap: wrap; } .rec-row .cat-btns { width: 100%; justify-content: flex-end; } }
+
+/* 잔액·수입·지출 요약 접기: 가계부와 대시보드 공통(기본 접힘, 펼침 여부는 화면마다 기기에 저장) */
+.sum-fold { display: grid; gap: 8px; margin: 16px 0; }
+.sum-fold .summary { margin: 0; }
+.sum-toggle {
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+  font-size: 14px; font-weight: 600; color: var(--fg); cursor: pointer;
+}
+.sum-toggle:hover { background: var(--surface-2); }
+.sum-chev { width: 16px; height: 16px; transition: transform 0.15s; }
+.sum-toggle[aria-expanded='true'] .sum-chev { transform: rotate(90deg); }
+.sum-toggle-state { font-weight: 400; font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .sum-chev { transition: none; } }

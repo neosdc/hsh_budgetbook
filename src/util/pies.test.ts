@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Tx } from '../types';
-import { donutArcs, personOf, SHARED, slicesByCategory, slicesByPerson } from './pies';
+import { donutArcs, peopleOf, slicesByCategory, slicesByPerson, splitAmount } from './pies';
 
 let n = 0;
 function tx(amount: number, category: string, place = '', type: Tx['type'] = 'expense', occurred_on = '2026-10-10'): Tx {
@@ -8,32 +8,51 @@ function tx(amount: number, category: string, place = '', type: Tx['type'] = 'ex
   return { id: `t${n}`, type, amount, occurred_on, category, memo: '', place, created_at: `${occurred_on}T00:00:${String(n % 60).padStart(2, '0')}Z` };
 }
 
-describe('personOf', () => {
-  it('사람 이름이면 그 사람, 위치나 빈 값은 가족 공동', () => {
-    expect(personOf(tx(1, '식비', '윤솔'))).toBe('윤솔');
-    expect(personOf(tx(1, '식비', '윤지방'))).toBe(SHARED);
-    expect(personOf(tx(1, '식비', ''))).toBe(SHARED);
+describe('peopleOf', () => {
+  it('사람 이름이면 그 사람, 위치면 그 위치를 쓰는 사람들, 빈 값은 거실', () => {
+    expect(peopleOf(tx(1, '식비', '윤솔'))).toEqual(['윤솔']);
+    expect(peopleOf(tx(1, '식비', '윤지방'))).toEqual(['윤지', '윤솔']);
+    expect(peopleOf(tx(1, '식비', '안방'))).toEqual(['승영', '지혜']);
+    expect(peopleOf(tx(1, '식비', '드레스룸'))).toEqual(['지혜']);
+    expect(peopleOf(tx(1, '식비', '서재'))).toEqual(['승영']);
+    for (const p of ['거실', '현관', '부엌', '']) expect(peopleOf(tx(1, '식비', p))).toEqual(['승영', '지혜', '윤지', '윤솔']);
+  });
+});
+
+describe('splitAmount', () => {
+  it('원 단위로 나누고 나머지는 앞사람부터 1원씩', () => {
+    expect(splitAmount(10000, 4)).toEqual([2500, 2500, 2500, 2500]);
+    expect(splitAmount(10001, 4)).toEqual([2501, 2500, 2500, 2500]);
+    expect(splitAmount(3, 2)).toEqual([2, 1]);
+    expect(splitAmount(300, 1)).toEqual([300]);
   });
 });
 
 describe('slicesByPerson', () => {
-  it('사람 목록 순서 고정, 가족 공동은 마지막, 0원인 사람은 뺀다, 수입은 무시', () => {
+  it('위치에 따라 나눠 합산하고, 합계는 지출 합계와 같다, 수입은 무시', () => {
     const s = slicesByPerson([
-      tx(300, '교육', '윤지'),
-      tx(100, '식비', '승영'),
-      tx(600, '식비', '부엌'),
+      tx(400, '식비', '부엌'), // 4명 100씩
+      tx(201, '의료·건강', '윤지방'), // 윤지 101, 윤솔 100
+      tx(50, '카페·간식', '안방'), // 승영 25, 지혜 25
+      tx(30, '교육', '윤지'),
       tx(9999, '급여', '승영', 'income'),
     ]);
-    expect(s.map((x) => [x.key, x.total, x.rest])).toEqual([
-      ['승영', 100, false],
-      ['윤지', 300, false],
-      [SHARED, 600, true],
+    expect(s.map((x) => [x.key, x.total])).toEqual([
+      ['승영', 125],
+      ['지혜', 125],
+      ['윤지', 231],
+      ['윤솔', 200],
     ]);
+    expect(s.reduce((a, x) => a + x.total, 0)).toBe(681);
     expect(s.reduce((a, x) => a + x.ratio, 0)).toBeCloseTo(1);
-    expect(s[0].ratio).toBeCloseTo(0.1);
+    const yunji = s.find((x) => x.key === '윤지')!;
+    expect(yunji.rows.map((t) => t.amount)).toEqual([400, 201, 30]);
+    expect(yunji.shares).toEqual([100, 101, 30]);
+    expect(yunji.splits).toEqual([4, 2, 1]);
   });
 
-  it('지출이 없으면 빈 목록', () => {
+  it('0원인 사람은 빼고, 지출이 없으면 빈 목록', () => {
+    expect(slicesByPerson([tx(100, '식비', '서재')]).map((x) => x.key)).toEqual(['승영']);
     expect(slicesByPerson([tx(1, '급여', '', 'income')])).toEqual([]);
   });
 });

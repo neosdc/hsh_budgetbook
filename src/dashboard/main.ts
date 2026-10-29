@@ -400,14 +400,22 @@ class Dashboard {
       `<span class="lg expense"></span>${what} · ${esc(slice.key)}` +
       `<span class="pick-total expense">${won(slice.total)}원</span>` +
       `<span class="pick-pct">${percentLabel(slice.total, grid.expense)} · ${slice.rows.length}건</span>${sub}`;
+    // 인원별에서 여러 사람이 나눈 지출은 이 사람 몫만 금액으로 보이고, 어느 위치를 몇 명이 나눴는지 칩으로 붙인다.
     $('pick-list').innerHTML = slice.rows
-      .map(
-        (t) =>
+      .map((t, i) => {
+        const split = slice.splits[i];
+        const where = t.place.trim() || '미지정 → 거실';
+        const chips =
+          kind === 'person'
+            ? `<span class="chip">${esc(t.category)}</span>` +
+              (split > 1 ? `<span class="chip">${esc(where)} · ${split}명 나눔 · 전체 ${won(t.amount)}원</span>` : '')
+            : `<span class="chip">${esc(t.place.trim() || '미지정')}</span>`;
+        return (
           `<li><span class="pick-date">${shortDate(grid.mode, t.occurred_on)}</span>` +
-          `<span class="pick-memo">${t.memo ? esc(t.memo) : '<span class="muted">메모 없음</span>'} ` +
-          `<span class="chip">${esc(kind === 'person' ? t.category : t.place.trim() || '미지정')}</span></span>` +
-          `<span class="amt expense">${won(t.amount)}원</span></li>`,
-      )
+          `<span class="pick-memo">${t.memo ? esc(t.memo) : '<span class="muted">메모 없음</span>'} ${chips}</span>` +
+          `<span class="amt expense">${won(slice.shares[i])}원</span></li>`
+        );
+      })
       .join('');
     this.openPick('pies');
   }

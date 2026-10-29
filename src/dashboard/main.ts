@@ -23,6 +23,7 @@ import { esc, won } from '../util/format';
 import { groupByPlace, incomeRatioLabel, percentLabel, PERSONS, PLACES, resolvePlace, type Place, type PlaceGroup } from '../util/places';
 import { slicesByCategory, slicesByPerson, type Slice } from '../util/pies';
 import type { HouseScene } from './house/scene';
+import { loadSummaryOpen, saveSummaryOpen } from '../summaryFold';
 import { PieChart } from './pies';
 import { TrendView } from './trend';
 import type { LedgerScene } from './scene';
@@ -38,12 +39,10 @@ interface Prefs {
   scale: HeightScale;
   cutaway: boolean;
   furniture: boolean;
-  /** 수입·지출·잔액 요약을 펼쳐 둘지. 다른 사람 앞에서 금액이 바로 보이지 않도록 기본은 접힘 */
-  summaryOpen: boolean;
 }
 
 function loadPrefs(): Prefs {
-  const fallback: Prefs = { view: 'house', mode: 'days', scale: 'linear', cutaway: true, furniture: true, summaryOpen: false };
+  const fallback: Prefs = { view: 'house', mode: 'days', scale: 'linear', cutaway: true, furniture: true };
   try {
     const p = JSON.parse(localStorage.getItem(PREF_KEY) ?? '{}') as Partial<Prefs>;
     return {
@@ -52,7 +51,6 @@ function loadPrefs(): Prefs {
       scale: p.scale === 'sqrt' ? 'sqrt' : 'linear',
       cutaway: p.cutaway !== false,
       furniture: p.furniture !== false,
-      summaryOpen: p.summaryOpen === true,
     };
   } catch {
     return fallback;
@@ -400,14 +398,22 @@ class Dashboard {
       `<span class="lg expense"></span>${what} · ${esc(slice.key)}` +
       `<span class="pick-total expense">${won(slice.total)}원</span>` +
       `<span class="pick-pct">${percentLabel(slice.total, grid.expense)} · ${slice.rows.length}건</span>${sub}`;
+    // 인원별에서 여러 사람이 나눈 지출은 이 사람 몫만 금액으로 보이고, 어느 위치를 몇 명이 나눴는지 칩으로 붙인다.
     $('pick-list').innerHTML = slice.rows
-      .map(
-        (t) =>
+      .map((t, i) => {
+        const split = slice.splits[i];
+        const where = t.place.trim() || '미지정 → 거실';
+        const chips =
+          kind === 'person'
+            ? `<span class="chip">${esc(t.category)}</span>` +
+              (split > 1 ? `<span class="chip">${esc(where)} · ${split}명 나눔 · 전체 ${won(t.amount)}원</span>` : '')
+            : `<span class="chip">${esc(t.place.trim() || '미지정')}</span>`;
+        return (
           `<li><span class="pick-date">${shortDate(grid.mode, t.occurred_on)}</span>` +
-          `<span class="pick-memo">${t.memo ? esc(t.memo) : '<span class="muted">메모 없음</span>'} ` +
-          `<span class="chip">${esc(kind === 'person' ? t.category : t.place.trim() || '미지정')}</span></span>` +
-          `<span class="amt expense">${won(t.amount)}원</span></li>`,
-      )
+          `<span class="pick-memo">${t.memo ? esc(t.memo) : '<span class="muted">메모 없음</span>'} ${chips}</span>` +
+          `<span class="amt expense">${won(slice.shares[i])}원</span></li>`
+        );
+      })
       .join('');
     this.openPick('pies');
   }
@@ -438,9 +444,11 @@ class Dashboard {
     press('[data-scale]', (b) => b.dataset.scale === p.scale);
     press('[data-wall]', (b) => (b.dataset.wall === 'cut') === p.cutaway);
     $('furn-btn').setAttribute('aria-pressed', String(p.furniture));
-    $('sum-toggle').setAttribute('aria-expanded', String(p.summaryOpen));
-    $('sum-toggle-state').textContent = p.summaryOpen ? '접기' : '숨김 · 눌러서 보기';
-    $('dash-stats').hidden = !p.summaryOpen;
+    // 요약 펼침 여부는 가계부와 함께 쓰는 값(src/summaryFold.ts)
+    const open = loadSummaryOpen();
+    $('sum-toggle').setAttribute('aria-expanded', String(open));
+    $('sum-toggle-state').textContent = open ? '접기' : '숨김 · 눌러서 보기';
+    $('dash-stats').hidden = !open;
     $('period-label').textContent = p.mode === 'days' ? monthLabel(this.anchor) : `${monthLabel(shiftMonth(this.anchor, -11))} – ${monthLabel(this.anchor)}`;
     $('scale-note').hidden = p.scale !== 'sqrt';
     const house = p.view === 'house';
@@ -499,7 +507,10 @@ class Dashboard {
       });
     }
     // 접힘 여부는 다른 보기 설정과 함께 이 기기(브라우저)에 저장된다.
-    $('sum-toggle').addEventListener('click', () => update({ summaryOpen: !this.prefs.summaryOpen }));
+    $('sum-toggle').addEventListener('click', () => {
+      saveSummaryOpen(!loadSummaryOpen());
+      this.syncControls();
+    });
     $('furn-btn').addEventListener('click', () => {
       update({ furniture: !this.prefs.furniture });
       this.house?.setFurniture(this.prefs.furniture);

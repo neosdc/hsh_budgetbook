@@ -1,4 +1,5 @@
 import { SEARCH_LIMIT, fetchAll, fetchMonth, removeTx, saveTx, searchTx } from './api';
+import { loadSummaryOpen, saveSummaryOpen } from './summaryFold';
 import { $, downloadText, formatAmountField, toast } from './dom';
 import { describeError } from './errors';
 import { BudgetManager } from './budgets';
@@ -29,6 +30,12 @@ interface State {
 }
 
 /** 로그인 후 보이는 가계부 화면 전체(요약, 목록, 분류, 입력 대화상자)를 담당한다. */
+function applySummaryOpen(open: boolean): void {
+  $('sum-toggle').setAttribute('aria-expanded', String(open));
+  $('sum-toggle-state').textContent = open ? '접기' : '숨김 · 눌러서 보기';
+  $('summary').hidden = !open;
+}
+
 /** 주소의 ?month=YYYY-MM 을 읽고 주소창에서 지운다. 형식이 틀리면 null */
 function consumeMonthParam(): string | null {
   const url = new URL(window.location.href);
@@ -572,6 +579,12 @@ export class Ledger {
     $('cat-manage-btn').addEventListener('click', () => void this.cats.open('expense'));
     $('cat-manage-link').addEventListener('click', () => void this.cats.open(this.selectedType()));
     $('rec-btn').addEventListener('click', () => void this.recurring.open());
+    applySummaryOpen(loadSummaryOpen());
+    $('sum-toggle').addEventListener('click', () => {
+      const open = $('sum-toggle').getAttribute('aria-expanded') !== 'true';
+      applySummaryOpen(open);
+      saveSummaryOpen(open);
+    });
     $('budget-btn').addEventListener('click', () => void this.budgets.open(this.cats.names('expense')));
     $('export-btn').addEventListener('click', () => this.exportCurrent());
     $('export-all-btn').addEventListener('click', () => void this.exportAll());

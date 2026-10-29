@@ -193,3 +193,19 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 }
 .stage.flat { height: min(56vh, 520px); }
 @media (max-width: 720px) { .stage.flat { height: 400px; min-height: 0; } }
+
+/* 월별 흐름(2D): 예전 가계부 "추이" 화면. 막대·표 스타일은 style.css의 .chart, .trend-table을 그대로 쓴다. */
+.trend-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 12px; margin: 16px 0; display: grid; gap: 8px; min-width: 0; }
+.trend-card .trend-head { margin: 0; align-items: flex-start; }
+.trend-card h2 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin: 0; }
+.trend-range { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.trend-avg { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+.trend-avg strong { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.trend-avg strong.neg { color: var(--expense); }
+.trend-avg .count { font-size: 12px; }
+.trend-table-wrap summary { cursor: pointer; font-size: 14px; font-weight: 600; padding: 6px 0; }
+.trend-table-wrap summary .count { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 6px; }
+.trend-table-wrap .table-scroll { padding: 0; }
+.trend-table a.link-btn { font-size: 14px; color: var(--fg); }
+/* 그래프는 viewBox(720×280) 비율로 늘어나므로 너무 넓어지면 글자가 커진다. 원래 추이 화면과 비슷한 크기로 묶는다. */
+.trend-card .chart { max-width: 860px; }

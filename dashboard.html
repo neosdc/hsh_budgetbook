@@ -83,6 +83,29 @@
         </div>
       </section>
 
+      <section id="trend" class="trend-card" aria-labelledby="trend-title" hidden>
+        <div class="trend-head">
+          <div>
+            <h2 id="trend-title">월별 흐름 <span id="trend-range" class="trend-range"></span></h2>
+            <p id="trend-avg" class="trend-avg"></p>
+          </div>
+          <div class="legend" aria-hidden="true"><span class="lg income">수입</span><span class="lg expense">지출</span></div>
+        </div>
+        <div class="chart-scroll">
+          <div id="trend-chart" class="chart"></div>
+          <div id="trend-tip" class="tip" hidden></div>
+        </div>
+        <details class="trend-table-wrap">
+          <summary>월별 합계 표 <span class="count">달을 누르면 가계부의 그 달 내역으로 이동</span></summary>
+          <div class="table-scroll">
+            <table class="trend-table">
+              <thead><tr><th scope="col">월</th><th scope="col">수입</th><th scope="col">지출</th><th scope="col">잔액</th></tr></thead>
+              <tbody id="trend-rows"></tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+
       <section id="stage-card" class="stage-card" aria-label="우리 집 3D 모형 위 자리별 지출 막대">
         <div class="stage-head">
           <div class="legend">

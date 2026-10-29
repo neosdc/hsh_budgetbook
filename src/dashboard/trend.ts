@@ -1,9 +1,15 @@
-import { $ } from './dom';
-import type { Tx } from './types';
-import { esc, won } from './util/format';
-import { compactWon, lastMonths, monthlyTotals, niceMax, topExpenseCategories, type MonthTotal } from './util/trend';
+import { $ } from '../dom';
+import type { Tx } from '../types';
+import { won } from '../util/format';
+import { compactWon, lastMonths, monthlyTotals, niceMax, type MonthTotal } from '../util/trend';
 
-/** 추이 화면에서 보여 줄 개월 수 */
+/*
+ * 월별 흐름(2D): 대시보드 "통계로 보기"에 있는 최근 12개월 월별 수입·지출 막대, 월평균 지출, 월별 표.
+ * 예전 가계부 "추이" 화면을 옮겨 왔다. 월별 비교는 평면 막대가 정확히 읽혀 2D로 둔다.
+ * 표의 달을 누르면 가계부의 그 달 내역 화면(./?month=YYYY-MM)으로 간다.
+ */
+
+/** 보여 줄 개월 수 */
 export const TREND_MONTHS = 12;
 
 const W = 720;
@@ -64,13 +70,13 @@ function chartSvg(totals: readonly MonthTotal[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 ${totals.length}개월 월별 수입과 지출 막대 그래프. 정확한 금액은 아래 표에 있습니다.">${grid}${groups}</svg>`;
 }
 
-/** "최근 12개월" 추이 화면: 막대 그래프, 요약, 월별 표, 지출 분류 상위. */
+/** 월별 흐름: 막대 그래프, 월평균 지출, 월별 표 */
 export class TrendView {
   private totals: MonthTotal[] = [];
   private readonly tip = $('trend-tip');
   private readonly wrap = $('trend-chart');
 
-  constructor(private readonly onPickMonth: (month: string) => void) {
+  constructor() {
     this.bind();
   }
 
@@ -79,17 +85,8 @@ export class TrendView {
     return lastMonths(current, TREND_MONTHS);
   }
 
-  setMessage(html: string): void {
-    $('trend-body').hidden = true;
-    const msg = $('trend-msg');
-    msg.hidden = false;
-    msg.innerHTML = html;
-  }
-
   render(rows: readonly Tx[], months: readonly string[]): void {
     this.totals = monthlyTotals(rows, months);
-    $('trend-msg').hidden = true;
-    $('trend-body').hidden = false;
 
     const totals = this.totals;
     const income = totals.reduce((a, t) => a + t.income, 0);
@@ -99,11 +96,11 @@ export class TrendView {
     const counted = first === -1 ? 0 : totals.length - first;
     const avg = counted > 0 ? Math.round(expense / counted) : 0;
     const balance = income - expense;
-    $('trend-stats').innerHTML =
-      `<div class="sum-item"><div class="sum-label">수입 합계</div><div class="sum-value" style="color:var(--income)">${won(income)}<span class="unit">원</span></div></div>` +
-      `<div class="sum-item"><div class="sum-label">지출 합계</div><div class="sum-value" style="color:var(--expense)">${won(expense)}<span class="unit">원</span></div></div>` +
-      `<div class="sum-item"><div class="sum-label">월평균 지출${counted > 0 && counted < totals.length ? ` (${counted}개월)` : ''}</div><div class="sum-value">${won(avg)}<span class="unit">원</span></div></div>` +
-      `<div class="sum-item"><div class="sum-label">잔액 합계</div><div class="sum-value${balance < 0 ? ' neg' : ''}">${balance < 0 ? '−' : ''}${won(Math.abs(balance))}<span class="unit">원</span></div></div>`;
+    const range = `${totals[0].month.replace('-', '.')} – ${totals[totals.length - 1].month.replace('-', '.')}`;
+    $('trend-range').textContent = range;
+    $('trend-avg').innerHTML =
+      `월평균 지출 <strong>${won(avg)}원</strong>${counted > 0 && counted < totals.length ? ` <span class="count">(기록이 있는 ${counted}개월 기준)</span>` : ''}` +
+      ` · 12개월 잔액 <strong class="${balance < 0 ? 'neg' : ''}">${balance < 0 ? '−' : ''}${won(Math.abs(balance))}원</strong>`;
 
     this.wrap.innerHTML = chartSvg(totals);
 
@@ -112,32 +109,12 @@ export class TrendView {
       .map((t) => {
         const [y, m] = t.month.split('-').map(Number);
         return (
-          `<tr><th scope="row"><button type="button" class="link-btn" data-month="${t.month}">${y}년 ${m}월</button></th>` +
+          `<tr><th scope="row"><a class="link-btn" href="./?month=${t.month}">${y}년 ${m}월</a></th>` +
           `<td class="income">${won(t.income)}</td><td class="expense">${won(t.expense)}</td>` +
           `<td class="${t.balance < 0 ? 'neg' : ''}">${t.balance < 0 ? '−' : ''}${won(Math.abs(t.balance))}</td></tr>`
         );
       })
       .join('');
-  }
-
-  renderTop(rows: readonly Tx[]): void {
-    const top = topExpenseCategories(rows, 5);
-    const box = $('trend-cats');
-    if (top.length === 0) {
-      box.innerHTML = '<p class="hint">기간 안에 지출 내역이 없습니다.</p>';
-      return;
-    }
-    const max = top[0].total;
-    box.innerHTML = top
-      .map(
-        (c) =>
-          `<div class="cat"><div class="cat-top"><span>${esc(c.category)}</span><span class="amt-sm">${won(c.total)}원</span></div>` +
-          `<div class="cat-bar"><div class="cat-fill" data-w="${((c.total / max) * 100).toFixed(1)}"></div></div></div>`,
-      )
-      .join('');
-    box.querySelectorAll<HTMLElement>('.cat-fill').forEach((el) => {
-      el.style.width = `${el.dataset.w ?? '0'}%`;
-    });
   }
 
   /* ---------- 이벤트 ---------- */
@@ -174,10 +151,6 @@ export class TrendView {
     this.wrap.addEventListener('pointerleave', () => {
       this.tip.hidden = true;
       for (const el of this.wrap.querySelectorAll('.grp.on')) el.classList.remove('on');
-    });
-    $('trend-rows').addEventListener('click', (e) => {
-      const month = (e.target as HTMLElement).closest<HTMLElement>('[data-month]')?.dataset.month;
-      if (month) this.onPickMonth(month);
     });
   }
 }

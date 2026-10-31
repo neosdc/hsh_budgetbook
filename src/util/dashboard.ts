@@ -107,7 +107,8 @@ export function buildGrid(mode: GridMode, rows: readonly Tx[], columns: readonly
 
   const sorted = [...rows].sort((a, b) => (a.occurred_on < b.occurred_on ? -1 : a.occurred_on > b.occurred_on ? 1 : 0));
   for (const t of sorted) {
-    const col = colIndex.get(t.occurred_on.slice(0, keyLen));
+    // category 모드는 열이 하나뿐이라 주어진 내역을 모두 그 열에 합산한다.
+    const col = mode === 'category' ? 0 : colIndex.get(t.occurred_on.slice(0, keyLen));
     const lane = laneIndex.get(`${t.type}\u0000${t.category}`);
     if (col === undefined || lane === undefined) continue;
     const id = `${col}:${lane}`;
@@ -128,12 +129,14 @@ export function buildGrid(mode: GridMode, rows: readonly Tx[], columns: readonly
 }
 
 /**
- * 한 달을 분류별 합계 막대로: 열은 그 달 하나, 줄은 내역이 있는 분류만(수입 분류 다음 지출 분류, buildLanes 순서).
- * 3D 장면은 category 모드에서 줄을 가로축으로 펼쳐 그린다.
+ * 한 달(또는 12개월)을 분류별 합계 막대로: 열은 기간 하나, 줄은 내역이 있는 분류만(수입 분류 다음 지출 분류, buildLanes 순서).
+ * 넘겨 준 내역을 모두 합산하므로 12개월이면 1년치 합계가 된다. 2D 막대 그래프는 줄을 가로축으로 펼쳐 그린다.
  */
-export function buildCategoryGrid(month: string, rows: readonly Tx[], lanes: readonly Lane[]): Grid {
+export function buildCategoryGrid(month: string, rows: readonly Tx[], lanes: readonly Lane[], periodLabel?: string): Grid {
   const [y, m] = month.split('-').map(Number);
-  const g = buildGrid('category', rows, [{ key: month, label: `${y}년 ${m}월`, showLabel: false }], lanes);
+  // 기간 이름을 따로 주면(12개월) 넘겨 준 내역을 모두 합산하고, 아니면 그 달 내역만 합산한다.
+  const inPeriod = periodLabel ? rows : rows.filter((t) => t.occurred_on.startsWith(month));
+  const g = buildGrid('category', inPeriod, [{ key: month, label: periodLabel ?? `${y}년 ${m}월`, showLabel: false }], lanes);
   const used = [...new Set(g.cells.map((c) => c.lane))].sort((a, b) => a - b);
   const remap = new Map(used.map((old, i) => [old, i]));
   const top = g.cells.reduce((mx, c) => Math.max(mx, c.total), 0);

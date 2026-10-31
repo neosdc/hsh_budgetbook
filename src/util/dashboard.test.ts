@@ -173,6 +173,13 @@ describe('buildCategoryGrid', () => {
     expect(g.max).toBe(4_000_000);
   });
 
+  it('기간 이름을 주면 12개월 내역을 모두 분류별 1년치 합계로 합산한다', () => {
+    const rows = [tx('expense', 3000, '2026-10-02', '식비'), tx('expense', 7000, '2025-12-20', '식비')];
+    const g = buildCategoryGrid('2026-10', rows, buildLanes(cats, rows), '25년 11월 – 26년 10월');
+    expect(g.columns[0].label).toBe('25년 11월 – 26년 10월');
+    expect(g.cells.map((c) => [c.total, c.rows.length])).toEqual([[10000, 2]]);
+  });
+
   it('fineMax는 촘촘한 단계로 올린다', () => {
     expect(fineMax(10_789_380)).toBe(12_000_000);
     expect(fineMax(2_050_503)).toBe(2_500_000);

@@ -30,7 +30,7 @@ import type { LedgerScene } from './scene';
 
 const PREF_KEY = 'hsh-dash-prefs';
 
-/** 보기: 집 모형 위 자리별 막대(house) 또는 통계로 보기(grid: 인원별·분류별 원형 그래프와 날짜×분류 3D 막대 그래프) */
+/** 보기: 집 모형 위 자리별 막대(house) 또는 통계로 보기(grid: 인원별·분류별 원형 그래프와 분류별 2D 막대 그래프) */
 type View = 'grid' | 'house';
 
 interface Prefs {
@@ -71,6 +71,7 @@ function signed(n: number): string {
 
 /** 칸이 가리키는 기간 이름: 일별이면 '10월 15일 목요일', 월별이면 '2026년 10월' */
 function cellPeriod(grid: Grid, cell: Cell): string {
+  if (grid.mode === 'category') return grid.columns[cell.col].label;
   const key = grid.columns[cell.col].key;
   return grid.mode === 'days' ? fullDateLabel(key).replace(/^\d+년 /, '') : monthLabel(key);
 }
@@ -126,7 +127,7 @@ class Dashboard {
     this.categories = null;
   }
 
-  /** 지금 보기의 3D 장면을 처음 열 때 만든다. three.js는 커서 데이터와 나란히 따로 불러온다. */
+  /** 지금 보기의 장면을 처음 열 때 만든다. 집 모형의 three.js는 커서 데이터와 나란히 따로 불러온다. */
   private async ensureScene(): Promise<void> {
     try {
       if (this.prefs.view === 'grid' && !this.scene && !this.gridFailed) {
@@ -150,7 +151,7 @@ class Dashboard {
     } catch {
       if (this.prefs.view === 'grid') this.gridFailed = true;
       else this.houseFailed = true;
-      this.stageMessage('이 브라우저에서는 3D 화면을 그릴 수 없습니다(WebGL 미지원). 아래 표에서 금액을 확인할 수 있습니다.');
+      this.stageMessage('이 브라우저에서는 화면을 그릴 수 없습니다(WebGL 미지원). 아래 표에서 금액을 확인할 수 있습니다.');
       $<HTMLDetailsElement>('table-view').open = true;
     }
   }
@@ -190,8 +191,9 @@ class Dashboard {
     const columns = mode === 'days' ? dayColumns(this.anchor) : monthColumns(this.anchor);
     const rows = mode === 'days' ? windowRows.filter((t) => t.occurred_on.startsWith(this.anchor)) : windowRows;
     const lanes = buildLanes(this.categories ?? [], rows);
-    // 통계로 보기의 한 달은 날짜 축 없이 분류별 합계 막대(축: 분류, 금액)로 그린다.
-    const grid = this.prefs.view === 'grid' && mode === 'days' ? buildCategoryGrid(this.anchor, rows, lanes) : buildGrid(mode, rows, columns, lanes);
+    // 통계로 보기는 한 달이든 12개월이든 분류별 합계 막대(축: 분류, 금액)로 그린다. 12개월은 1년치 합계.
+    const period = mode === 'days' ? undefined : `${monthLabel(shiftMonth(this.anchor, -11))} – ${monthLabel(this.anchor)}`;
+    const grid = this.prefs.view === 'grid' ? buildCategoryGrid(this.anchor, rows, lanes, period) : buildGrid(mode, rows, columns, lanes);
     this.grid = grid;
     this.places = groupByPlace(rows);
 
@@ -204,6 +206,11 @@ class Dashboard {
     this.scene?.setGrid(grid, this.prefs.scale);
     this.house?.setData(this.places, grid.expense, this.prefs.scale);
     this.updateStageMessage();
+  }
+
+  /** 내역 날짜를 어떻게 쓸지: 한 달이면 '15일', 12개월이면 '10.15' */
+  private dateMode(): GridMode {
+    return this.prefs.mode === 'months' ? 'months' : 'days';
   }
 
   private updateStageMessage(): void {
@@ -325,7 +332,7 @@ class Dashboard {
     $('pick-list').innerHTML = cell.rows
       .map(
         (t) =>
-          `<li>${grid.mode === 'days' ? '' : `<span class="pick-date">${Number(t.occurred_on.slice(8))}일</span>`}` +
+          `<li><span class="pick-date">${shortDate(this.dateMode(), t.occurred_on)}</span>` +
           `<span class="pick-memo">${t.memo ? esc(t.memo) : '<span class="muted">메모 없음</span>'}</span>` +
           `<span class="amt ${t.type}">${won(t.amount)}원</span></li>`,
       )
@@ -358,7 +365,7 @@ class Dashboard {
               g.rows
                 .map(
                   (t) =>
-                    `<li><span class="pick-date">${shortDate(grid.mode, t.occurred_on)}</span>` +
+                    `<li><span class="pick-date">${shortDate(this.dateMode(), t.occurred_on)}</span>` +
                     `<span class="pick-memo">${t.memo ? esc(t.memo) : '<span class="muted">메모 없음</span>'} ${placeChip(t)}</span>` +
                     `<span class="amt expense">${won(t.amount)}원</span></li>`,
                 )
@@ -373,7 +380,7 @@ class Dashboard {
 
   /**
    * 내역 목록을 연다. 목록 상자는 하나를 함께 쓰고, 누른 그래프 바로 아래로 옮겨서
-   * 원형 그래프를 누르면 원형 그래프 아래에, 3D 화면을 누르면 3D 화면 아래에 보인다.
+   * 원형 그래프를 누르면 원형 그래프 아래에, 막대 그래프나 3D 화면을 누르면 그 아래에 보인다.
    */
   private openPick(after: 'pies' | 'stage'): void {
     const pick = $('pick');
@@ -409,7 +416,7 @@ class Dashboard {
               (split > 1 ? `<span class="chip">${esc(where)} · ${split}명 나눔 · 전체 ${won(t.amount)}원</span>` : '')
             : `<span class="chip">${esc(t.place.trim() || '미지정')}</span>`;
         return (
-          `<li><span class="pick-date">${shortDate(grid.mode, t.occurred_on)}</span>` +
+          `<li><span class="pick-date">${shortDate(this.dateMode(), t.occurred_on)}</span>` +
           `<span class="pick-memo">${t.memo ? esc(t.memo) : '<span class="muted">메모 없음</span>'} ${chips}</span>` +
           `<span class="amt expense">${won(slice.shares[i])}원</span></li>`
         );
@@ -460,7 +467,8 @@ class Dashboard {
     $('lg-income').hidden = house;
     $('hint-grid').hidden = house;
     $('hint-house').hidden = !house;
-    $('stage-card').setAttribute('aria-label', house ? '우리 집 3D 모형 위 자리별 지출 막대' : '날짜와 분류별 3D 막대 그래프');
+    $('reset-view').hidden = !house; // 시점 초기화는 3D 모형에서만
+    $('stage-card').setAttribute('aria-label', house ? '우리 집 3D 모형 위 자리별 지출 막대' : '분류별 막대 그래프');
   }
 
   private bind(): void {
@@ -522,7 +530,7 @@ class Dashboard {
     };
     $('prev-btn').addEventListener('click', () => move(-1));
     $('next-btn').addEventListener('click', () => move(1));
-    $('reset-view').addEventListener('click', () => (this.prefs.view === 'house' ? this.house?.resetView() : this.scene?.resetView()));
+    $('reset-view').addEventListener('click', () => (this.house?.resetView()));
     $('pick-close').addEventListener('click', () => this.closePick());
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !$('pick').hidden) this.closePick();

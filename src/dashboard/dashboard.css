@@ -196,3 +196,19 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 .trend-table a.link-btn { font-size: 14px; color: var(--fg); }
 /* 그래프는 viewBox(720×280) 비율로 늘어나므로 너무 넓어지면 글자가 커진다. 원래 추이 화면과 비슷한 크기로 묶는다. */
 .trend-card .chart { max-width: 860px; }
+
+/* 분류별 막대 그래프(2D, SVG) */
+.bar2d { display: block; width: 100%; height: 100%; }
+.bar2d text { font-family: var(--font-body); }
+.bar2d .g-line { stroke: var(--line); stroke-width: 1; }
+.bar2d .g-axis { stroke: var(--muted); stroke-width: 1; }
+.bar2d .g-tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.bar2d .g-cat { font-size: 12px; fill: var(--fg); }
+.bar2d .g-val { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.bar2d .g-hit { fill: transparent; }
+.bar2d .g-bar { cursor: pointer; }
+.bar2d .g-bar.income .g-fill { fill: var(--c-income); }
+.bar2d .g-bar.expense .g-fill { fill: var(--c-expense); }
+.bar2d .g-bar.hot .g-fill { stroke: var(--fg); stroke-width: 2; }
+.bar2d .g-bar.dim { opacity: 0.25; }
+@media (max-width: 560px) { .bar2d .g-cat { font-size: 11px; } .bar2d .g-tick { font-size: 10px; } }

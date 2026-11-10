@@ -31,37 +31,10 @@
 
 ### 전체 구성도
 
-```mermaid
-flowchart LR
-  subgraph PAGES["GitHub Pages (정적 파일, Vite 빌드)"]
-    direction TB
-    subgraph LEDGER["가계부 · index.html"]
-      LM["main.ts<br/>로그인 상태별 화면 전환"] --> LG["ledger.ts<br/>요약 · 목록 · 입력"]
-      LG --> BD["budgets.ts<br/>월 예산"]
-      LG --> RC["recurring.ts<br/>반복 내역"]
-      LG --> CT["categories.ts<br/>사용자 분류"]
-    end
-    subgraph DASH["대시보드 · dashboard.html"]
-      DM["dashboard/main.ts<br/>데이터 · 조작"] --> HS["house/<br/>우리 집 3D 모형"]
-      DM --> SC["scene.ts<br/>분류별 막대 그래프"]
-      DM --> PI["pies.ts<br/>원형 그래프"]
-      DM --> TR["trend.ts<br/>월별 흐름"]
-    end
-    UT["util/<br/>날짜 · 합계 · 서식 · CSV · 예산 · 반복 계산<br/>(단위 테스트 대상)"]
-    API["api.ts · supabase.ts<br/>supabase-js + publishable key"]
-    LEDGER --> UT
-    DASH --> UT
-    LEDGER --> API
-    DASH --> API
-  end
-  subgraph SB["Supabase"]
-    AUTH["Auth<br/>Google OAuth"]
-    DB[("Postgres + RLS<br/>transactions · categories<br/>budgets · recurring_rules")]
-  end
-  API -->|"조회 · 저장 · 삭제"| DB
-  LM -->|"로그인 · 로그아웃"| AUTH
-  GH["main 푸시"] -->|"GitHub Actions<br/>테스트 → 빌드 → 배포"| PAGES
-```
+![hsh_budgetbook 전체 구성도: GitHub Pages의 가계부·대시보드 페이지가 공용 계산 코드와 Supabase 클라이언트를 함께 쓰고, 클라이언트가 Google 로그인과 RLS로 보호되는 Postgres에 접속한다](README-architecture.svg)
+
+그림의 원본은 [`README-architecture.html`](README-architecture.html)이고, SVG는 이 파일에서 내보낸 것입니다.
+Postgres에는 `transactions`, `categories`, `budgets`, `recurring_rules` 네 테이블이 있습니다.
 
 가계부와 대시보드는 별도 페이지지만 같은 도메인의 로그인 세션과 `util/` 계산 코드를 함께 씁니다.
 

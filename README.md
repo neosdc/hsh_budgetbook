@@ -31,9 +31,10 @@
 
 ### 전체 구성도
 
-![hsh_budgetbook 전체 구성도: GitHub Pages의 가계부·대시보드 페이지가 공용 계산 코드와 Supabase 클라이언트를 함께 쓰고, 클라이언트가 Google 로그인과 RLS로 보호되는 Postgres에 접속한다](README-architecture.svg)
+![hsh_budgetbook 전체 구성도: GitHub Pages의 가계부·대시보드 페이지가 공용 계산 코드와 Supabase 클라이언트를 함께 쓰고, 클라이언트가 Google 로그인과 RLS로 보호되는 Postgres에 접속한다](docs/architecture.svg)
 
-그림의 원본은 [`README-architecture.html`](README-architecture.html)이고, SVG는 이 파일에서 내보낸 것입니다.
+그림은 [`docs/architecture.html`](docs/architecture.html)에서 만듭니다. 장비를 추가하거나 구조가 바뀌면 이 HTML을 고친 뒤 diagram-design 스킬의 `export_svg.py`로 `docs/architecture.svg`를 다시 만드세요.
+
 Postgres에는 `transactions`, `categories`, `budgets`, `recurring_rules` 네 테이블이 있습니다.
 
 가계부와 대시보드는 별도 페이지지만 같은 도메인의 로그인 세션과 `util/` 계산 코드를 함께 씁니다.
@@ -56,6 +57,7 @@ src/
   ledger.ts      가계부 화면(요약, 목록, 분류, 입력 대화상자)
   util/          날짜·합계·서식 계산 (단위 테스트 대상)
 supabase/migrations/   DB 스키마 SQL
+docs/                  전체 구성도(architecture.html 원본, architecture.svg 내보낸 그림)
 .github/workflows/deploy.yml   GitHub Pages 배포
 ```
 

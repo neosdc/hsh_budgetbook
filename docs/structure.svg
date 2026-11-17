@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="structure-title structure-desc" id="structure-root">
+        <title id="structure-title">hsh_budgetbook 폴더 구조</title>
+        <desc id="structure-desc">저장소가 src, supabase/migrations, docs, .github/workflows 네 폴더로 나뉘고, src 안은 로그인·데이터 접근, 가계부 화면, 대시보드, 공용 계산 네 묶음으로 이루어진 폴더 구조.</desc>
+        <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;family=Noto+Serif:ital@0;1&amp;family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400&amp;family=Noto+Sans+TC:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400&amp;display=swap');
+      #structure-root { --color-paper:   #2d3142;
+      --color-ink:     #f5f5f5;
+      --color-muted:   #bfc0c0;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', 'Noto Sans KR', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #structure-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #structure-root .diagram-container { width: 100%; overflow-x: auto; }
+      @media print {
+#structure-root .diagram-container { overflow-x: visible; }
+}</style>
+          <pattern id="structure-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="#f5f5f5" fill-opacity="0.10"/>
+          </pattern>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#2d3142"/>
+        <rect width="100%" height="100%" fill="url(#structure-dots)" opacity="0.55"/>
+
+        <!-- Connectors first (behind nodes) -->
+        <!-- Root → top-level folders: stub, vertical bus at x=268, stubs into each child -->
+        <path d="M 224 300 H 268" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 268 168 V 432" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 268 168 H 312" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 268 256 H 312" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 268 344 H 312" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 268 432 H 312" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <!-- src/ → its four groups: bus at x=540 -->
+        <path d="M 496 168 H 540" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 540 66 V 270" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 540 66 H 584" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 540 134 H 584" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 540 202 H 584" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+        <path d="M 540 270 H 584" fill="none" stroke="#bfc0c0" stroke-width="1"/>
+
+        <!-- Root: repository (focal) -->
+        <rect x="40" y="274" width="184" height="52" rx="6" fill="#2d3142"/>
+        <rect x="40" y="274" width="184" height="52" rx="6" fill="#f08a59" stroke="#f08a59" stroke-width="1" fill-opacity="0.10"/>
+        <rect x="48" y="282" width="28" height="12" rx="2" fill="none" stroke="#f08a59" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="62" y="291" fill="#f08a59" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">REPO</text>
+        <text x="132" y="306" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">hsh_budgetbook</text>
+        <text x="132" y="320" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Vite · TypeScript</text>
+
+        <!-- Tier 1: src/ (branch) -->
+        <rect x="312" y="142" width="184" height="52" rx="6" fill="#2d3142"/>
+        <rect x="312" y="142" width="184" height="52" rx="6" fill="#f5f5f5" stroke="#f5f5f5" stroke-width="1" fill-opacity="0.04"/>
+        <rect x="320" y="150" width="24" height="12" rx="2" fill="none" stroke="#f5f5f5" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="332" y="159" fill="#f5f5f5" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DIR</text>
+        <text x="404" y="174" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">앱 소스</text>
+        <text x="404" y="188" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">src/</text>
+
+        <!-- Tier 1: supabase/migrations (leaf) -->
+        <rect x="312" y="230" width="184" height="52" rx="6" fill="#2d3142"/>
+        <rect x="312" y="230" width="184" height="52" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="0.8" fill-opacity="0.05"/>
+        <rect x="320" y="238" width="24" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="332" y="247" fill="#bfc0c0" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SQL</text>
+        <text x="404" y="262" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">DB 스키마</text>
+        <text x="404" y="276" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">supabase/migrations/</text>
+
+        <!-- Tier 1: docs/ (leaf) -->
+        <rect x="312" y="318" width="184" height="52" rx="6" fill="#2d3142"/>
+        <rect x="312" y="318" width="184" height="52" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="0.8" fill-opacity="0.05"/>
+        <rect x="320" y="326" width="24" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="332" y="335" fill="#bfc0c0" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DOC</text>
+        <text x="404" y="350" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">구성도 · 구조도</text>
+        <text x="404" y="364" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">docs/*.html · *.svg</text>
+
+        <!-- Tier 1: .github/workflows (leaf) -->
+        <rect x="312" y="406" width="184" height="52" rx="6" fill="#2d3142"/>
+        <rect x="312" y="406" width="184" height="52" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="0.8" fill-opacity="0.05"/>
+        <rect x="320" y="414" width="20" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="330" y="423" fill="#bfc0c0" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CI</text>
+        <text x="404" y="438" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">Pages 배포</text>
+        <text x="404" y="452" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">.github/workflows/deploy.yml</text>
+
+        <!-- Tier 2: login · data access -->
+        <rect x="584" y="40" width="256" height="52" rx="6" fill="#2d3142"/>
+        <rect x="584" y="40" width="256" height="52" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="0.8" fill-opacity="0.05"/>
+        <rect x="592" y="48" width="32" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="608" y="57" fill="#bfc0c0" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AUTH</text>
+        <text x="712" y="72" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">로그인 · 데이터 접근</text>
+        <text x="712" y="86" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">main · auth · api · supabase</text>
+
+        <!-- Tier 2: ledger screens -->
+        <rect x="584" y="108" width="256" height="52" rx="6" fill="#2d3142"/>
+        <rect x="584" y="108" width="256" height="52" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="0.8" fill-opacity="0.05"/>
+        <rect x="592" y="116" width="20" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="602" y="125" fill="#bfc0c0" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">UI</text>
+        <text x="712" y="140" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">가계부 화면</text>
+        <text x="712" y="154" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ledger · budgets · recurring · categories</text>
+
+        <!-- Tier 2: dashboard -->
+        <rect x="584" y="176" width="256" height="52" rx="6" fill="#2d3142"/>
+        <rect x="584" y="176" width="256" height="52" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="0.8" fill-opacity="0.05"/>
+        <rect x="592" y="184" width="20" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="602" y="193" fill="#bfc0c0" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">3D</text>
+        <text x="712" y="208" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">대시보드</text>
+        <text x="712" y="222" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">dashboard/ · house/ · trend · scene</text>
+
+        <!-- Tier 2: shared util -->
+        <rect x="584" y="244" width="256" height="52" rx="6" fill="#2d3142"/>
+        <rect x="584" y="244" width="256" height="52" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="0.8" fill-opacity="0.05"/>
+        <rect x="592" y="252" width="24" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="604" y="261" fill="#bfc0c0" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LIB</text>
+        <text x="712" y="276" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">공용 계산 · 단위 테스트</text>
+        <text x="712" y="290" fill="#bfc0c0" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">util/ · vitest</text>
+
+        <!-- Legend strip -->
+        <line x1="40" y1="540" x2="920" y2="540" stroke="#f5f5f5" stroke-width="0.8" stroke-opacity="0.10"/>
+        <text x="40" y="556" fill="#bfc0c0" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40" y="570" width="14" height="10" rx="2" fill="#f08a59" stroke="#f08a59" stroke-width="1" fill-opacity="0.10"/>
+        <text x="60" y="580" fill="#bfc0c0" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">저장소</text>
+
+        <rect x="132" y="570" width="14" height="10" rx="2" fill="#f5f5f5" stroke="#f5f5f5" stroke-width="1" fill-opacity="0.04"/>
+        <text x="152" y="580" fill="#bfc0c0" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">하위 묶음이 있는 폴더</text>
+
+        <rect x="316" y="570" width="14" height="10" rx="2" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="0.8" fill-opacity="0.05"/>
+        <text x="336" y="580" fill="#bfc0c0" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">끝 항목</text>
+      </svg>

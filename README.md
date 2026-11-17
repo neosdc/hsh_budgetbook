@@ -44,6 +44,15 @@ GitHub Pages는 서버 코드를 실행하지 못하므로 브라우저가 Supab
 데이터 보호는 `public.transactions`의 RLS 정책(`user_id = auth.uid()`)이 담당합니다.
 `sb_secret_...` 키와 `service_role` 키는 이 저장소에 절대 넣지 않습니다.
 
+### 폴더 구조
+
+![hsh_budgetbook 폴더 구조: 저장소가 src, supabase/migrations, docs, .github/workflows로 나뉘고 src 안은 로그인·데이터 접근, 가계부 화면, 대시보드, 공용 계산으로 이루어진다](docs/structure.svg)
+
+그림은 [`docs/structure.html`](docs/structure.html)에서 만듭니다. 폴더나 파일이 바뀌면 이 HTML을 고친 뒤 diagram-design 스킬의 `export_svg.py`로 `docs/structure.svg`를 다시 만드세요.
+
+<details>
+<summary>파일별 설명</summary>
+
 ```
 src/
   main.ts        로그인 상태에 따라 화면 전환
@@ -57,9 +66,11 @@ src/
   ledger.ts      가계부 화면(요약, 목록, 분류, 입력 대화상자)
   util/          날짜·합계·서식 계산 (단위 테스트 대상)
 supabase/migrations/   DB 스키마 SQL
-docs/                  전체 구성도(architecture.html 원본, architecture.svg 내보낸 그림)
+docs/                  전체 구성도(architecture.*)와 폴더 구조도(structure.*). .html이 원본, .svg는 내보낸 그림
 .github/workflows/deploy.yml   GitHub Pages 배포
 ```
+
+</details>
 
 ## 로컬 실행
 
